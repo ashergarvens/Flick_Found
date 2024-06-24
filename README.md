@@ -19,3 +19,10 @@
 * Ex users: People who want more recommendations for shows and movies and cannot get them elsewhere
 * Simplest block could be: getting user input and sending it to the bot.
 * Other aspects to add value: Add a ratings API to give the user more info about the recommendations.
+
+### Project Setup & Libraries
+```
+pip install pandas
+pip install sqlalchemy
+pip install openai
+```
