@@ -20,3 +20,7 @@
 * Simplest block could be: getting user input and sending it to the bot.
 * Other aspects to add value: Add a ratings API to give the user more info about the recommendations.
 
+#### Program Architecture
+* Ideas:
+* Make files with different parts of the process ie one module with all SQL stuff, one with all prompt stuff, one with main entry point
+* Make functions for most of the work to make it modular in case we want to expand.
