@@ -12,7 +12,7 @@ def getUserInput() -> list[str]:
     print('\nPlease enter up to 5 choices for movies to base the recommendations off of. ')
     choices = []
     while len(choices) < 5:
-        choice = input('Enter your choices here or type S to stop: ').strip()
+        choice = input('Enter your choices here or type S to stop: ')
         if choice == 'S':
             if len(choices) == 0:
                 print("You must enter at least one choice before quitting.")
@@ -107,21 +107,23 @@ def modify_database(recommendations):
             ).fetchall()
             print(pd.DataFrame(result))
 
-# choices = getUserInput()
-#choices = ["Spiderman: Far from home", "Ironman", "Thor", "Hulk", "Black Widow"]
-choices = getUserInput()
-if choices:
-    preferences = additionalQuestion()
-formatted_response = sendApiRequest(choices, preferences, "")
-response = process_response(formatted_response)
-modify_database(response)
-feedback = userFeedback()
 
-while feedback:
-    formatted_response = sendApiRequest(choices, preferences, feedback)
+if __name__ == '__main__':
+    # choices = getUserInput()
+    #choices = ["Spiderman: Far from home", "Ironman", "Thor", "Hulk", "Black Widow"]
+    choices = getUserInput()
+    if choices:
+        preferences = additionalQuestion()
+    formatted_response = sendApiRequest(choices, preferences, "")
     response = process_response(formatted_response)
     modify_database(response)
     feedback = userFeedback()
- 
+
+    while feedback:
+        formatted_response = sendApiRequest(choices, preferences, feedback)
+        response = process_response(formatted_response)
+        modify_database(response)
+        feedback = userFeedback()
+    
 
 
