@@ -70,9 +70,9 @@ def sendApiRequest(choices, preferences, feedback):
             completion = client.chat.completions.create(
               model="gpt-3.5-turbo",
               messages=[
-                {"role": "system", "content": f"Please give me a recommendation
-                    based on these movies here {choices} and with the
-                    preferences {preferences}. {feedback}"},
+                {"role": "system", "content": f"Please give me a"
+                 "recommendation based on these movies here {choices}"
+                 "and with the preferences {preferences}. {feedback}"},
 
                 {"role": "user", "content": "You are a movie recommendation"
                  "bot that takes in similar tv shows or movies and give 10"
