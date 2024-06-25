@@ -1,5 +1,7 @@
 name: Tests
+
 on: push
+
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
@@ -10,6 +12,8 @@ jobs:
         with:
           python-version: 3.11.3
       - name: Install tools
-        run: python -m pip install --upgrade pip pytest
+        run: |
+          python -m pip install --upgrade pip pytest
+          pip install pandas openai sqlalchemy
       - name: Test with unittest
         run: python3 -m unittest tests.py
