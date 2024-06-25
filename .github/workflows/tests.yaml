@@ -10,7 +10,7 @@ jobs:
         with:
           python-version: 3.11.3
       - name: Install tools
-        run: 
+        run: |
         python -m pip install --upgrade pip pytest
         pip install pandas
         pip install openai
