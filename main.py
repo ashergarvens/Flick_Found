@@ -9,26 +9,78 @@ my_api_key = os.getenv('OPENAI_KEY')
 openai.api_key = my_api_key
 
 def getUserInput() -> list[str]:
-    print('Please enter up to 5 choices for movies or TV shows to base the recommendations off of. ')
+    print('\nPlease enter up to 5 choices for movies to base the recommendations off of. ')
     choices = []
     while len(choices) < 5:
-        choices.append(input('Enter your choice here: ').strip())
+        choice = input('Enter your choices here or type S to stop: ').strip()
+        if choice == 'S':
+            if len(choices) == 0:
+                print("You must enter at least one choice before quitting.")
+            else:
+                break
+        elif not choice:
+            print("Choice cannot be empty. Please enter a valid movie. ")
+        else:
+            choices.append(choice)
+            
     return choices
 
-def sendApiRequest (choices):
-    client = OpenAI(
-        api_key=my_api_key,
-    )
-    completion = client.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=[
-        {"role": "system", "content": f"Please give me a recommendation based on these shows here {choices}"},
-        {"role": "user", "content": "You are a movie and show recommendation bot that takes in similar tv shows or movies and give 10 specifc movie or tv show recommendation as a response in a json format with the following keys: title, genre, rating out of 10 from IMDB, description, release date. Please do it as one json string with the key as recommendations with a list of 10 movies with their respective attributes. and use double quotes"}]
-    )
-    # print(completion.choices[0].message.content)
-    formatted = json.loads(completion.choices[0].message.content)
-    # print(formatted)
-    return formatted
+
+def additionalQuestion():
+    print("\nIs there a specific genre you prefer for the recommendations?")
+
+    preferences = input("Enter your preferences here or enter None: ")
+
+    print("\nProcessing request....")
+
+    if preferences.lower() == "none":
+         return ""
+    
+    return preferences
+
+def userFeedback():
+
+    while True:
+        print("\nDo you like your recommendations? type Y or N")
+        answer = input("Enter your choice here: ")
+
+        if answer == 'Y':
+            return ""
+        elif answer == 'N':
+            print("Sorry to hear that, please give me some feedback so I can improve your recommendations")
+
+            feedback = input("Enter your feedback here: ")
+
+            print("\nProcessing request....")
+
+            break
+
+
+    return feedback
+
+
+def sendApiRequest (choices, preferences, feedback):
+    while True:
+        try:
+            if feedback:
+                feedback = "Use this feedback in your response: ", feedback
+            client = OpenAI(
+                api_key=my_api_key,
+            )
+            completion = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": f"Please give me a recommendation based on these movies here {choices} and with the preferences {preferences}. {feedback}"},
+                {"role": "user", "content": "You are a movie recommendation bot that takes in similar tv shows or movies and give 10 specific movie recommendation as a response in a json format with the following keys: title, genre, rating out of 10 from IMDB, release date. Please do it as one json string with the key as recommendations with a list of 10 movies with their respective attributes. and use double quotes and also please end with a closing curly bracket"}]
+            )
+            #print(completion.choices[0].message.content)
+            formatted = json.loads(completion.choices[0].message.content)
+            #print(formatted)
+            return formatted
+        except json.JSONDecodeError:
+            print("There is a json decode error")
+    
+
 
 def process_response(formatted_data):
     recommendations = []
@@ -37,7 +89,6 @@ def process_response(formatted_data):
             'title' : item['title'],
             'genre' : item['genre'],
             'rating' : item['rating'],
-            'description' : item['description'],
             'releaseDate' : item['release date']
         }
         recommendations.append(data)
@@ -57,7 +108,20 @@ def modify_database(recommendations):
             print(pd.DataFrame(result))
 
 # choices = getUserInput()
-choices = ["Spiderman: Far from home", "Ironman", "Thor", "Hulk", "Black Widow"]
-formatted_response = sendApiRequest(choices)
+#choices = ["Spiderman: Far from home", "Ironman", "Thor", "Hulk", "Black Widow"]
+choices = getUserInput()
+if choices:
+    preferences = additionalQuestion()
+formatted_response = sendApiRequest(choices, preferences, "")
 response = process_response(formatted_response)
 modify_database(response)
+feedback = userFeedback()
+
+while feedback:
+    formatted_response = sendApiRequest(choices, preferences, feedback)
+    response = process_response(formatted_response)
+    modify_database(response)
+    feedback = userFeedback()
+ 
+
+
