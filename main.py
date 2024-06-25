@@ -1,5 +1,5 @@
 import pandas as pd
-import os 
+import os
 import openai
 from openai import OpenAI
 import json
@@ -8,8 +8,10 @@ import sqlalchemy as db
 my_api_key = os.getenv('OPENAI_KEY')
 openai.api_key = my_api_key
 
+
 def getUserInput() -> list[str]:
-    print('\nPlease enter up to 5 choices for movies to base the recommendations off of. ')
+    print('\nPlease enter up to 5 choices for movies',
+          'to base the recommendations off of. ')
     choices = []
     while len(choices) < 5:
         choice = input('Enter your choices here or type S to stop: ')
@@ -22,7 +24,6 @@ def getUserInput() -> list[str]:
             print("Choice cannot be empty. Please enter a valid movie. ")
         else:
             choices.append(choice)
-            
     return choices
 
 
@@ -34,9 +35,9 @@ def additionalQuestion():
     print("\nProcessing request....")
 
     if preferences.lower() == "none":
-         return ""
-    
+        return ""
     return preferences
+
 
 def userFeedback():
 
@@ -47,19 +48,18 @@ def userFeedback():
         if answer == 'Y':
             return ""
         elif answer == 'N':
-            print("Sorry to hear that, please give me some feedback so I can improve your recommendations")
+            print("Sorry to hear that, please give me some",
+                  "feedback so I can improve your recommendations")
 
             feedback = input("Enter your feedback here: ")
 
             print("\nProcessing request....")
 
             break
-
-
     return feedback
 
 
-def sendApiRequest (choices, preferences, feedback):
+def sendApiRequest(choices, preferences, feedback):
     while True:
         try:
             if feedback:
@@ -68,31 +68,43 @@ def sendApiRequest (choices, preferences, feedback):
                 api_key=my_api_key,
             )
             completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": f"Please give me a recommendation based on these movies here {choices} and with the preferences {preferences}. {feedback}"},
-                {"role": "user", "content": "You are a movie recommendation bot that takes in similar tv shows or movies and give 10 specific movie recommendation as a response in a json format with the following keys: title, genre, rating out of 10 from IMDB, release date. Please do it as one json string with the key as recommendations with a list of 10 movies with their respective attributes. and use double quotes and also please end with a closing curly bracket"}]
+              model="gpt-3.5-turbo",
+              messages=[
+                {"role": "system", "content": f"Please give me a recommendation
+                    based on these movies here {choices} and with the
+                    preferences {preferences}. {feedback}"},
+
+                {"role": "user", "content": "You are a movie recommendation"
+                 "bot that takes in similar tv shows or movies and give 10"
+                 "specific movie recommendation as a response in a json"
+                 "format with the following keys: title, genre, rating out"
+                 "of 10 from IMDB, release date. Please do it as one"
+                 "json string with the key as recommendations with a"
+                 "list of 10 movies with their respective attributes. and"
+                 "use double quotes and also please end with a closing"
+                 "curly bracket"}
+                ]
             )
-            #print(completion.choices[0].message.content)
+            # print(completion.choices[0].message.content)
             formatted = json.loads(completion.choices[0].message.content)
-            #print(formatted)
+            # print(formatted)
             return formatted
         except json.JSONDecodeError:
             print("There is a json decode error")
-    
 
 
 def process_response(formatted_data):
     recommendations = []
     for item in formatted_data['recommendations']:
         data = {
-            'title' : item['title'],
-            'genre' : item['genre'],
-            'rating' : item['rating'],
-            'releaseDate' : item['release date']
+            'title': item['title'],
+            'genre': item['genre'],
+            'rating': item['rating'],
+            'releaseDate': item['release date']
         }
         recommendations.append(data)
     return recommendations
+
 
 def modify_database(recommendations):
     df = pd.DataFrame.from_dict(recommendations)
@@ -110,7 +122,8 @@ def modify_database(recommendations):
 
 if __name__ == '__main__':
     # choices = getUserInput()
-    #choices = ["Spiderman: Far from home", "Ironman", "Thor", "Hulk", "Black Widow"]
+    # choices = ["Spiderman: Far from home", "Ironman", "Thor",
+    # "Hulk", "Black Widow"]
     choices = getUserInput()
     if choices:
         preferences = additionalQuestion()
@@ -124,6 +137,3 @@ if __name__ == '__main__':
         response = process_response(formatted_response)
         modify_database(response)
         feedback = userFeedback()
-    
-
-

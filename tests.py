@@ -6,9 +6,9 @@ import pandas as pd
 
 class TestMediaRecommendations(unittest.TestCase):
 
-    #GetUserInput
+    # GetUserInput
     def test_getUserInput(self):
-        with patch('builtins.input', side_effect=['Batman','S']):
+        with patch('builtins.input', side_effect=['Batman', 'S']):
             choices = getUserInput()
             self.assertEqual(choices,['Batman'])
 
@@ -23,7 +23,7 @@ class TestMediaRecommendations(unittest.TestCase):
             self.assertEqual(choices,['Superman','Batman','Spiderman', 'Hulk', 'Wonder Woman'])
 
 
-    #additionalQuestion
+    # additionalQuestion
     @patch('builtins.input', side_effect=['Sci-Fi'])
     def test_additionalQuestion(self, mock_input):
         preferences = additionalQuestion()
@@ -35,7 +35,7 @@ class TestMediaRecommendations(unittest.TestCase):
         self.assertEqual(preferences, '')
 
 
-    #userFeedback
+    # userFeedback
     @patch('builtins.input', side_effect=['Y'])
     def test_userFeedback_positive(self, x):
         feedback = userFeedback()
@@ -52,7 +52,7 @@ class TestMediaRecommendations(unittest.TestCase):
         self.assertEqual(feedback, '')
 
     
-    #process_response   
+    # process_response   
     def test_process_response(self):
         formatted_data = {'recommendations': [{
              'title': 'Movie1', 
@@ -67,7 +67,7 @@ class TestMediaRecommendations(unittest.TestCase):
         self.assertEqual(recommendations[0]['title'], 'Movie1')
 
 
-    #modify_database
+    # modify_database
     @patch('pandas.DataFrame.to_sql')
     def test_modify_database(self, MockDataFrame):
         recommendations = [{
@@ -80,7 +80,7 @@ class TestMediaRecommendations(unittest.TestCase):
         MockDataFrame.assert_called_once()
 
 
-    #API
+    # API
 
 
 
