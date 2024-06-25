@@ -1,6 +1,7 @@
 import unittest
 from main import getUserInput, additionalQuestion, userFeedback, sendApiRequest, process_response, modify_database
 from unittest.mock import patch, MagicMock
+import pandas as pd
 
 
 class TestMediaRecommendations(unittest.TestCase):
