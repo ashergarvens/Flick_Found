@@ -1,4 +1,6 @@
 # Movie Recommendation Bot
+[![Check Style](https://github.com/ashergarvens/recommendation_bot/actions/workflows/style.yaml/badge.svg)](https://github.com/ashergarvens/recommendation_bot/actions/workflows/style.yaml)
+[![Tests](https://github.com/ashergarvens/recommendation_bot/actions/workflows/tests.yaml/badge.svg)](https://github.com/ashergarvens/recommendation_bot/actions/workflows/tests.yaml)
 
 ## Overview
 - Movie Recommendation Bot
@@ -41,6 +43,7 @@ python3 main.py
 - sendApiRequest() sends a request to OpenAI API for the movie recommendations
 - process_response() processes the API and formats the dictionary to go into the DataFrame
 - modify_database() stores the recommendations into the SQLite databse
+- menu() prints the menu
 
 ## Database Details
  - stores the movie recommendations using SQLite
