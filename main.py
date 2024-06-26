@@ -32,33 +32,20 @@ def additionalQuestion():
 
     preferences = input("Enter your preferences here or enter None: ")
 
-    print("\nProcessing request....")
-
     if preferences.lower() == "none":
         return ""
     return preferences
 
 
 def userFeedback():
-    while True:
-        print("\nDo you like your recommendations? type Y or N")
-        answer = input("Enter your choice here: ")
-
-        if answer == 'Y':
-            return ""
-        elif answer == 'N':
-            print("Sorry to hear that, please give me some",
-                  "feedback so I can improve your recommendations")
-
-            feedback = input("Enter your feedback here: ")
-
-            print("\nProcessing request....")
-
-            break
+    print("Sorry to hear that, please give me some",
+          "feedback so I can improve your recommendations")
+    feedback = input("Enter your feedback here: ")
     return feedback
 
 
 def sendApiRequest(choices, preferences, feedback):
+    print("\nProcessing request....")
     while True:
         try:
             if feedback:
@@ -129,9 +116,9 @@ def modify_database(recommendations):
             print(pd.DataFrame(result))
 
 
-def menu(c, p, f):
-    choices, preferences, feedback = c, p, f
-    response = None
+def menu(c, p):
+    choices, preferences = c, p
+    feedback = None
     while True:
         print("Menu Options:")
         print("1. Add recommendations")
@@ -165,11 +152,14 @@ if __name__ == '__main__':
     # choices = ["Spiderman: Far from home", "Ironman", "Thor",
     # "Hulk", "Black Widow"]
     choices = getUserInput()
-    if choices:
-        preferences = additionalQuestion()
+    preferences = additionalQuestion()
     formatted_response = sendApiRequest(choices, preferences, "")
     response = process_response(formatted_response)
     modify_database(response)
-    feedback = userFeedback()
-    if feedback:
-        menu(choices, preferences, feedback)
+    print("\nDo you like your recommendations? type Y or N")
+    answer = input("Enter your choice here: ")
+
+    if answer == 'Y':
+        print("Thank you for using Movie Recommendations Bot!")
+    elif answer == 'N':
+        menu(choices, preferences)
