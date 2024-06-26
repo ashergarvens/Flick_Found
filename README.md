@@ -29,6 +29,11 @@ pip install openai
 ## API key
 - set your API key as an environmental variable
 
+## Running the program
+'''
+python3 main.py
+'''
+
 ## Script Details
 - GetUserInput() collects up to 5 movies choices from the user
 - additionalQuestion() asks for a users genre preference
