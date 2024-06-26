@@ -44,17 +44,17 @@ class TestMediaRecommendations(unittest.TestCase):
         self.assertEqual(preferences, '')
 
     # userFeedback
-    @patch('builtins.input', side_effect=['Y'])
+    @patch('builtins.input', side_effect=[''])
     def test_userFeedback_positive(self, x):
         feedback = userFeedback()
         self.assertEqual(feedback, '')
 
-    @patch('builtins.input', side_effect=['N', 'Some feedback'])
+    @patch('builtins.input', side_effect=['Some feedback'])
     def test_userFeedback_negative(self, x):
         feedback = userFeedback()
         self.assertEqual(feedback, 'Some feedback')
 
-    @patch('builtins.input', side_effect=['X', 'Y'])
+    @patch('builtins.input', side_effect=[''])
     def test_userFeedback_negative(self, x):
         feedback = userFeedback()
         self.assertEqual(feedback, '')
