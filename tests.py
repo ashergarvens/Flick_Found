@@ -4,6 +4,11 @@ from main import userFeedback, sendApiRequest, process_response
 from main import modify_database
 from unittest.mock import patch, MagicMock
 import pandas as pd
+import openai
+import os
+
+my_api_key = os.getenv('OPENAI_KEY')
+openai.api_key = my_api_key
 
 
 class TestMediaRecommendations(unittest.TestCase):
@@ -79,8 +84,6 @@ class TestMediaRecommendations(unittest.TestCase):
         ]
         modify_database(recommendations)
         MockDataFrame.assert_called_once()
-
-    # API
 
 
 if __name__ == '__main__':

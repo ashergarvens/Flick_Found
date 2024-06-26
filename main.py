@@ -70,12 +70,12 @@ def sendApiRequest(choices, preferences, feedback):
             completion = client.chat.completions.create(
               model="gpt-3.5-turbo",
               messages=[
-                {"role": "system", "content": f"Please give me a"
-                 "recommendation based on these movies here {choices}"
-                 "and with the preferences {preferences}. {feedback}"},
+                {"role": "system", "content": f"Please give me a "
+                 f"recommendation based on these movies here {choices} "
+                 f"and with the preferences {preferences}.{feedback}."},
 
                 {"role": "user", "content": "You are a movie recommendation"
-                 "bot that takes in similar tv shows or movies and give 10"
+                 "bot that takes in similar movies and gives 10"
                  "specific movie recommendation as a response in a json"
                  "format with the following keys: title, genre, rating out"
                  "of 10 from IMDB, release date. Please do it as one"
@@ -87,7 +87,6 @@ def sendApiRequest(choices, preferences, feedback):
             )
             # print(completion.choices[0].message.content)
             formatted = json.loads(completion.choices[0].message.content)
-            # print(formatted)
             return formatted
         except json.JSONDecodeError:
             print("There is a json decode error")
