@@ -40,7 +40,6 @@ def additionalQuestion():
 
 
 def userFeedback():
-
     while True:
         print("\nDo you like your recommendations? type Y or N")
         answer = input("Enter your choice here: ")
@@ -68,21 +67,32 @@ def sendApiRequest(choices, preferences, feedback):
                 api_key=my_api_key,
             )
             completion = client.chat.completions.create(
-              model="gpt-3.5-turbo",
-              messages=[
-                {"role": "system", "content": f"Please give me a "
-                 f"recommendation based on these movies here {choices} "
-                 f"and with the preferences {preferences}.{feedback}."},
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": f"Please give me a "
+                      f"recommendation based on "
+                      f"these movies here "
+                      f"{choices} "
+                      f"and with the preferences "
+                      f"{preferences}."
+                      f"{feedback}."},
 
-                {"role": "user", "content": "You are a movie recommendation"
-                 "bot that takes in similar movies and gives 10"
-                 "specific movie recommendation as a response in a json"
-                 "format with the following keys: title, genre, rating out"
-                 "of 10 from IMDB, release date. Please do it as one"
-                 "json string with the key as recommendations with a"
-                 "list of 10 movies with their respective attributes. and"
-                 "use double quotes and also please end with a closing"
-                 "curly bracket"}
+                    {"role": "user",
+                     "content": "You are a movie recommendation"
+                        "bot that takes in similar movies and gives 10"
+                        "specific movie recommendation as a "
+                        "response in a "
+                        "json""format with the following keys: "
+                        "title, genre, rating out"
+                        "of 10 from IMDB, release date. "
+                        "Please do it as one"
+                        "json string with the key as "
+                        "recommendations with a"
+                        "list of 10 movies with their "
+                        "respective attributes. and"
+                        "use double quotes and also please "
+                        "end with a closing"
+                        "curly bracket"}
                 ]
             )
             # print(completion.choices[0].message.content)
@@ -119,6 +129,37 @@ def modify_database(recommendations):
             print(pd.DataFrame(result))
 
 
+def menu(c, p, f):
+    choices, preferences, feedback = c, p, f
+    response = None
+    while True:
+        print("Menu Options:")
+        print("1. Add recommendations")
+        print("2. Change genre preference")
+        print("3. Update feedback")
+        print("4. Regenerate new recommendations")
+        print("5. Quit")
+        choice = input("Enter your choice: ")
+        if choice == '1':
+            choices = getUserInput()
+        elif choice == '2':
+            preferences = additionalQuestion()
+        elif choice == '3':
+            feedback = userFeedback()
+            if not feedback:
+                print("Thank you for using Movie Recommendations Bot!")
+                return
+        elif choice == '4':
+            response = process_response(
+                sendApiRequest(choices, preferences, feedback))
+            modify_database(response)
+        elif choice == '5':
+            print("Thank you for using Movie Recommendations Bot!")
+            return
+        else:
+            continue
+
+
 if __name__ == '__main__':
     # choices = getUserInput()
     # choices = ["Spiderman: Far from home", "Ironman", "Thor",
@@ -130,9 +171,5 @@ if __name__ == '__main__':
     response = process_response(formatted_response)
     modify_database(response)
     feedback = userFeedback()
-
-    while feedback:
-        formatted_response = sendApiRequest(choices, preferences, feedback)
-        response = process_response(formatted_response)
-        modify_database(response)
-        feedback = userFeedback()
+    if feedback:
+        menu(choices, preferences, feedback)
