@@ -43,6 +43,8 @@ python3 main.py
 - sendApiRequest() sends a request to OpenAI API for the movie recommendations
 - process_response() processes the API and formats the dictionary to go into the DataFrame
 - modify_database() stores the recommendations into the SQLite databse
+- queryDatabase() user inputs genre to search for in the database
+- queryDatabaseWrapper() function to get user input until user stops
 - menu() prints the menu
 
 ## Database Details
