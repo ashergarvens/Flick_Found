@@ -125,7 +125,8 @@ def menu(c, p):
         print("2. Change genre preference")
         print("3. Update feedback")
         print("4. Regenerate new recommendations")
-        print("5. Quit")
+        print("5. Search recommendation list based on genre ")
+        print("6. Quit")
         choice = input("Enter your choice: ")
         if choice == '1':
             choices = getUserInput()
@@ -141,10 +142,33 @@ def menu(c, p):
                 sendApiRequest(choices, preferences, feedback))
             modify_database(response)
         elif choice == '5':
+            queryDataBaseWrapper()
+        elif choice == '6':
             print("Thank you for using Movie Recommendations Bot!")
             return
         else:
             continue
+
+
+def queryDatabase(genre):
+    engine = db.create_engine('sqlite:///media_recommendations.db')
+    with engine.connect() as connection:
+        query = db.text(
+            "SELECT * FROM recommendations WHERE genre LIKE :genre")
+        result = connection.execute(
+            query, {"genre": f"%{genre}%"}).fetchall()
+        df = pd.DataFrame(result, columns=[
+            'title', 'genre', 'rating', 'releaseDate'])
+        print(df)
+
+
+def queryDataBaseWrapper():
+    print("Please enter a genre to search previous recommendations.")
+    while True:
+        genre = input("Enter here or S to stop: ")
+        if genre == 'S':
+            break
+        queryDatabase(genre)
 
 
 if __name__ == '__main__':
