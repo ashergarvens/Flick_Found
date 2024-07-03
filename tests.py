@@ -1,9 +1,8 @@
 import unittest
-from main import getUserInput, additionalQuestion
-from main import userFeedback, sendApiRequest, process_response
-from main import modify_database
-from unittest.mock import patch, MagicMock
-import pandas as pd
+from app.main import getUserInput, additionalQuestion
+from app.main import userFeedback, process_response
+from app.main import modify_database
+from unittest.mock import patch
 import openai
 import os
 

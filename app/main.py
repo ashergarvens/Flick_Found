@@ -9,7 +9,7 @@ my_api_key = os.getenv('OPENAI_KEY')
 openai.api_key = my_api_key
 
 
-def getUserInput() -> list[str]:
+def getUserInput():
     print('\nPlease enter up to 5 choices for movies',
           'to base the recommendations off of. ')
     choices = []
@@ -183,7 +183,7 @@ if __name__ == '__main__':
     print("\nDo you like your recommendations? type Y or N")
     answer = input("Enter your choice here: ")
 
-    if answer == 'Y':
+    if answer.lower() == 'y':
         print("Thank you for using Movie Recommendations Bot!")
-    elif answer == 'N':
+    else:
         menu(choices, preferences)
