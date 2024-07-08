@@ -1,7 +1,7 @@
 import unittest
-from app.main import getUserInput, additionalQuestion
-from app.main import userFeedback, process_response
-from app.main import modify_database
+from flick_found.main import getUserInput, additionalQuestion
+from flick_found.main import userFeedback, process_response
+from flick_found.main import modify_database
 from unittest.mock import patch
 import openai
 import os
