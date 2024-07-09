@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Recommendations Results</title>
+    <style>
+        .card {
+            border: 1px solid #ccc;
+            padding: 16px;
+            margin: 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            width: 200px;
+            text-align: center;
+        }
+        .card img {
+            max-width: 100%;
+            border-radius: 8px 8px 0 0;
+        }
+        .card-title {
+            font-size: 18px;
+            margin: 16px 0 8px;
+        }
+        .card-details {
+            font-size: 14px;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recommendations</h1>
+    <div class="recommendations">
+        {% for recommendation in recommendations %}
+            <div class="card">
+                {% if recommendation['poster'] %}
+                    <img src="{{ recommendation['poster'] }}" alt="Movie Poster">
+                {% else %}
+                    <img src="/static/default_poster.jpg" alt="Default Poster">
+                {% endif %}
+                <div class="card-title">{{ recommendation['title'] }}</div>
+                <div class="card-details">Genre: {{ recommendation['genre'] }}</div>
+                <div class="card-details">Rating: {{ recommendation['rating'] }}</div>
+                <div class="card-details">Release Date: {{ recommendation['releaseDate'] }}</div>
+            </div>
+        {% endfor %}
+    </div>
+    <a href="{{ url_for('search') }}">Back to Search</a>
+</body>
+</html>
