@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Recommendations</title>
+</head>
+<body>
+    <h1>Search Recommendations by Genre</h1>
+    <form action="{{ url_for('search') }}" method="POST">
+        <label for="genre">Genre:</label>
+        <input type="text" id="genre" name="genre">
+        <button type="submit">Search</button>
+    </form>
+    <a href="{{ url_for('index') }}">Back to Home</a>
+</body>
+</html>
