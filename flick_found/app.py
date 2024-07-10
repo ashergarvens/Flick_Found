@@ -14,6 +14,7 @@ from flask_migrate import Migrate
 app = Flask(__name__)
 proxied = FlaskBehindProxy(app)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -26,6 +27,12 @@ class User(db.Model):
 
     genre_preferences = db.relationship('GenrePreferences', backref='user', lazy=True)
     movie_preferences = db.relationship('MoviePreferences', backref='user', lazy=True)
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
     def __repr__(self):
         return f"User('{self.email}')"
@@ -89,7 +96,8 @@ def save_movie_preferences(user_id, movie_choices):
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():  # checks if entries are valid
-        user = User(email=form.email.data, password=form.password.data)
+        user = User(email=form.email.data)
+        user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
         flash(f'Account created for {form.email.data}!', 'success')
@@ -103,7 +111,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        if user and user.password == form.password.data:
+        if user and user.check_password(form.password.data):
             session['user_id'] = user.id
             print(session['user_id'])
             flash(f'Login successful for {form.email.data}', 'success')
@@ -114,7 +122,7 @@ def login():
 
 
 # API configuration
-TMDB_API_KEY = os.environ.get('TMDB_API_KEY') or '6ee03c9fb5b2144cd1ce55e22fc54381'
+TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
 OPENAI_API_KEY = os.environ.get('OPENAI_KEY')
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 openai.api_key = OPENAI_API_KEY
