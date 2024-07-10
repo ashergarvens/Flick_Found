@@ -37,7 +37,7 @@ with app.app_context():
 #     return render_template('about.html', subtitle='about', text='This is the second page!')
 
 
-@app.route("/login_register", methods=['GET', 'POST'])
+@app.route("/register", methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
     if form.validate_on_submit(): # checks if entries are valid
@@ -46,7 +46,7 @@ def register():
         db.session.commit()
         flash(f'Account created for {form.email.data}!', 'success')
         return redirect(url_for('index')) # if so - send to home page
-    return render_template('login_register.html', title='Register', form=form)
+    return render_template('register.html', title='Register', form=form)
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -59,7 +59,7 @@ def login():
             return redirect(url_for('index'))
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
-    return render_template('login_register.html', title='Login', form=form)
+    return render_template('login.html', title='Login', form=form)
 
 # @app.route("/update_server", methods=['POST'])
 # def webhook():
