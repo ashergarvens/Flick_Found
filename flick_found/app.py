@@ -6,31 +6,15 @@ import requests
 import openai
 from openai import OpenAI
 import json
-from bs4 import BeautifulSoup
+
 
 app = Flask(__name__)
 
 # API configuration
 TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+OPENAI_API_KEY = os.environ.get('OPENAI_KEY')
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 openai.api_key = OPENAI_API_KEY
-
-def ul_to_py_list(html_file):
-    with open(html_file, 'r', encoding='utf-8') as file:
-        html_content = file.read()
-
-    soup = BeautifulSoup(html_content, 'html.parser')
-
-    # Extract choices list
-    choices_ul = soup.find('ul', id='choices-list')
-    choices_list = [li.text.strip() for li in choices_ul.find_all('li')] if choices_ul else []
-
-    # Extract genre list
-    genre_ul = soup.find('ul', id='genre-list')
-    genre_list = [li.text.strip() for li in genre_ul.find_all('li')] if genre_ul else []
-
-    return choices_list, genre_list
 
 def get_upcoming_movies(tmbd_api_key):
     # calls to get upcoming movies -> we can process them to get chatgpt recommendations 
@@ -96,9 +80,7 @@ def generate_recommendations(movie_choices, preferences):
                     }
                 ]
             )
-            # print(completion.choices[0].message.content)
-            recommendations = json.loads(completion.choices[0].message.content)
-            return recommendations
+            return json.loads(completion.choices[0].message.content)
         except json.JSONDecodeError:
             print("There is a json decode error")
 
@@ -118,11 +100,14 @@ def process_response(response):
 
 def process_choices_and_recommendations(movie_choices, recommendations):
     while True:
+        count = 0
         try:
-            recommendtaions = generate_recommendations(movie_choices, recommendations)
-            processed_recommendations = process_response(recommendations)
+            processed_recommendations = process_response(generate_recommendations(movie_choices, recommendations))
             return processed_recommendations
         except KeyError:
+            count+= 1
+            if count > 3:
+                return ''
             print('There was a key error when converting the response to the proper dictionary. Retrying GPT request...')
 
 
@@ -140,12 +125,13 @@ def index():
 
 @app.route('/generate', methods=['POST'])
 def generate():
-    choices, genres = ul_to_py_list('index.html')
-    # choices = request.form.getlist('choices-list') # todo MUST FIX AFTER index.html UPDATED
-    # preferences = request.form['preferences']
-
+    choices = request.form.get('choices-hidden').split('`')
+    genres = request.form.get('genre-hidden').split('`')
     recommendations = process_choices_and_recommendations(choices, genres)
-    modify_database(recommendations)
+    if recommendations:
+        modify_database(recommendations)
+    else:
+        print('Unable to process API Request and Convert to DB')
 
     return redirect(url_for('results'))
 

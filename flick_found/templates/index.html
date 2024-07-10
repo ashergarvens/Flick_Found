@@ -7,11 +7,13 @@
 <body>
     <h1>Welcome to Movie Recommendations Bot</h1>
     <form action="{{ url_for('generate') }}" id="choices_form" method="POST">
-        <label for="choices">Choices (up to 5 movies):</label><br>
+        <input type="text" name="choices-hidden" id="choices-hidden" hidden>
+        <input type="text" name="genre-hidden" id="genre-hidden" hidden>
+        <label for="movie-choice">Choices (up to 5 movies):</label><br>
         <input type="text" name="choices" id="movie-choice" placeholder="Enter movie here...">
         <button type="button" id="add-movie-button"></button><br><br>
         <ul id="choices-list"></ul>
-        <label for="genres">Genre Preference:</label>
+        <label for="genre-choice">Genre Preference:</label>
         <input type="text" name="genres" id="genre-choice" placeholder="Enter genre here...">
         <button type="button" id="add-genre-button"></button><br><br>
         <ul id="genre-list"> </ul>
@@ -28,11 +30,13 @@
         const choicesList = document.getElementById('choices-list');
         const genreChoice = document.getElementById('genre-choice');
         const genreList = document.getElementById('genre-list');
-
+        const hiddenChoicesField = document.getElementById('choices-hidden')
+        const hiddenGenreField = document.getElementById('genre-hidden')
         addMovieButton.addEventListener('click', function(event) {
             const newItemText = movieChoice.value.trim();
             if (newItemText !== '') {
                 addItemToList(newItemText, choicesList);
+                hiddenChoicesField.value += newItemText + '`'
                 movieChoice.value = ''; // Clear the input field
             }
         });
@@ -41,6 +45,7 @@
             const newItemText = genreChoice.value.trim();
             if (newItemText !== '') {
                 addItemToList(newItemText, genreList);
+                hiddenGenreField.value += newItemText + '`'
                 genreChoice.value = ''; // Clear the input field
             }
         });
