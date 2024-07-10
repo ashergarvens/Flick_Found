@@ -56,6 +56,7 @@ def register():
     return render_template('register.html', title='Register', form=form)
 
 
+@app.route('/')
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -180,9 +181,10 @@ def modify_database(recommendations):
         df.to_sql('recommendations', con=engine, if_exists='replace', index=False)
 
 
-@app.route('/')
+@app.route('/preferences')
 def preferences():
-    return render_template(url_for('preferences'))
+    return render_template('preferences.html')
+
 
 
 @app.route('/generate', methods=['POST'])
