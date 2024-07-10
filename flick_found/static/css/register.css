@@ -19,7 +19,7 @@ h1 {
     background-clip: text;
     -webkit-text-fill-color: transparent;
 }
-#register-form, #login-form {
+#register-form {
     background-color: #1B2230;
     min-height: 35%;
     width: 25%;
@@ -35,6 +35,7 @@ h1 {
     flex-direction: column;
     align-items: center;
     overflow: hidden;
+    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.5);
 }
 #show-register, #show-login {
     background: none;
