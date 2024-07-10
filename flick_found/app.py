@@ -52,7 +52,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         flash(f'Account created for {form.email.data}!', 'success')
-        return redirect(url_for('index'))  # if so - send to home page
+        return redirect(url_for('preferences'))  # if so - send to home page
     return render_template('register.html', title='Register', form=form)
 
 
@@ -181,8 +181,8 @@ def modify_database(recommendations):
 
 
 @app.route('/')
-def index():
-    return render_template('index.html')
+def preferences():
+    return render_template(url_for('preferences'))
 
 
 @app.route('/generate', methods=['POST'])
