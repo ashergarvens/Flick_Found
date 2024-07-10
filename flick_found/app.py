@@ -1,5 +1,4 @@
 import os
-
 from flask import Flask, render_template, request, redirect, url_for
 import pandas as pd
 from sqlalchemy import create_engine, text
@@ -7,6 +6,7 @@ import requests
 import openai
 from openai import OpenAI
 import json
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
@@ -16,6 +16,32 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 openai.api_key = OPENAI_API_KEY
 
+def ul_to_py_list(html_file):
+    with open(html_file, 'r', encoding='utf-8') as file:
+        html_content = file.read()
+
+    soup = BeautifulSoup(html_content, 'html.parser')
+
+    # Extract choices list
+    choices_ul = soup.find('ul', id='choices-list')
+    choices_list = [li.text.strip() for li in choices_ul.find_all('li')] if choices_ul else []
+
+    # Extract genre list
+    genre_ul = soup.find('ul', id='genre-list')
+    genre_list = [li.text.strip() for li in genre_ul.find_all('li')] if genre_ul else []
+
+    return choices_list, genre_list
+
+def get_upcoming_movies(tmbd_api_key):
+    # calls to get upcoming movies -> we can process them to get chatgpt recommendations 
+    url = f'https://api.themoviedb.org/3/movie/upcoming?api_key={tmdb_api_key}'
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()['results']
+    else:
+        return []
+
+    response = requests.get(url, headers=headers)
 
 def get_movie_poster(title):
     search_url = f"{TMDB_BASE_URL}/search/movie"
@@ -32,12 +58,10 @@ def get_movie_poster(title):
     return None
 
 
-def generate_recommendations(choices, preferences, feedback):
+def generate_recommendations(movie_choices, preferences):
     print("\nProcessing request....")
     while True:
         try:
-            if feedback:
-                feedback = "Use this feedback in your response: ", feedback
             client = OpenAI(
                 api_key=OPENAI_API_KEY,
             )
@@ -47,27 +71,29 @@ def generate_recommendations(choices, preferences, feedback):
                     {"role": "system", "content": f"Please give me a "
                                                   f"recommendation based on "
                                                   f"these movies here "
-                                                  f"{choices} "
-                                                  f"and with the preferences "
-                                                  f"{preferences}."
-                                                  f"{feedback}."},
+                                                  f"{movie_choices} "
+                                                  f"and with the genres: "
+                                                  f"{preferences}."},
 
-                    {"role": "user",
-                     "content": "You are a movie recommendation"
-                                "bot that takes in similar movies and gives 10"
-                                "specific movie recommendation as a "
-                                "response in a "
-                                "json""format with the following keys: "
-                                "title, genre, rating out"
-                                "of 10 from IMDB, release date. "
-                                "Please do it as one"
-                                "json string with the key as "
-                                "recommendations with a"
-                                "list of 10 movies with their "
-                                "respective attributes. and"
-                                "use double quotes and also please "
-                                "end with a closing"
-                                "curly bracket"}
+                    {"role": "user", "content": "You are a movie recommendation bot that takes in similar movies "
+                                                "and gives 10 specific movie recommendations as a response in a json format "
+                                                "with the following keys: title, genre, rating out of 10 from IMDB, release date. "
+                                                "Please provide the recommendations as one json string with the key 'recommendations' "
+                                                "containing a list of 10 movies with their respective attributes. "
+                                                "Use double quotes for all strings. Here is a sample format:\n\n"
+                                                 "{\n"
+                                                 "  \"recommendations\": [\n"
+                                                 "    {\n"
+                                                 "      \"title\": \"Movie Title\",\n"
+                                                 "      \"genre\": \"Genre\",\n"
+                                                 "      \"rating\": \"8.5\",\n"
+                                                 "      \"release_date\": \"YYYY-MM-DD\"\n"
+                                                 "    },\n"
+                                                 "    ... 9 more movies ...\n"
+                                                 "  ]\n"
+                                                 "}.\n"
+                                                 "Please end with a closing curly bracket."
+                    }
                 ]
             )
             # print(completion.choices[0].message.content)
@@ -85,9 +111,19 @@ def process_response(response):
             'title': item['title'],
             'genre': item['genre'],
             'rating': item['rating'],
-            'releaseDate': item['release date']
+            'releaseDate': item['release_date']
         })
     return processed_recommendations
+        
+
+def process_choices_and_recommendations(movie_choices, recommendations):
+    while True:
+        try:
+            recommendtaions = generate_recommendations(movie_choices, recommendations)
+            processed_recommendations = process_response(recommendations)
+            return processed_recommendations
+        except KeyError:
+            print('There was a key error when converting the response to the proper dictionary. Retrying GPT request...')
 
 
 def modify_database(recommendations):
@@ -104,12 +140,11 @@ def index():
 
 @app.route('/generate', methods=['POST'])
 def generate():
-    choices = request.form.getlist('choices')
-    preferences = request.form['preferences']
-    feedback = request.form['feedback']
+    choices, genres = ul_to_py_list('index.html')
+    # choices = request.form.getlist('choices-list') # todo MUST FIX AFTER index.html UPDATED
+    # preferences = request.form['preferences']
 
-    response = generate_recommendations(choices, preferences, feedback)
-    recommendations = process_response(response)
+    recommendations = process_choices_and_recommendations(choices, genres)
     modify_database(recommendations)
 
     return redirect(url_for('results'))
