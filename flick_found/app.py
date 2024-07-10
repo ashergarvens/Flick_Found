@@ -10,6 +10,8 @@ from forms import RegistrationForm, LoginForm
 from flask_behind_proxy import FlaskBehindProxy
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 proxied = FlaskBehindProxy(app)
@@ -24,6 +26,12 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
     def __repr__(self):
         return f"User('{self.email}')"
@@ -48,7 +56,8 @@ with app.app_context():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():  # checks if entries are valid
-        user = User(email=form.email.data, password=form.password.data)
+        user = User(email=form.email.data)
+        user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
         flash(f'Account created for {form.email.data}!', 'success')
@@ -62,7 +71,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        if user and user.password == (form.password.data):
+        if user and user.check_password(form.password.data):
             flash(f'Login successful for {form.email.data}', 'success')
             return redirect(url_for('results'))
         else:
