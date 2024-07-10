@@ -1,14 +1,73 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for
 import pandas as pd
 from sqlalchemy import create_engine, text
 import requests
 import openai
 from openai import OpenAI
 import json
-
+from flask import Flask, render_template, url_for, flash, redirect, request
+from forms import RegistrationForm, LoginForm
+from flask_behind_proxy import FlaskBehindProxy
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 app = Flask(__name__)
+proxied = FlaskBehindProxy(app)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(60), nullable=False)
+
+    def __repr__(self):
+        return f"User('{self.email}')"
+
+
+with app.app_context():
+    db.create_all()
+
+
+# @app.route("/")
+# @app.route("/home")
+# def home():
+#     return render_template('home.html', subtitle='Home Page', text='This is the home page!')
+
+
+# @app.route("/about")
+# def second_page():
+#     return render_template('about.html', subtitle='about', text='This is the second page!')
+
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():  # checks if entries are valid
+        user = User(email=form.email.data, password=form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash(f'Account created for {form.email.data}!', 'success')
+        return redirect(url_for('index'))  # if so - send to home page
+    return render_template('register.html', title='Register', form=form)
+
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and user.password == (form.password.data):
+            flash(f'Login successful for {form.email.data}', 'success')
+            return redirect(url_for('results'))
+        else:
+            flash('Login Unsuccessful. Please check email and password', 'danger')
+    return render_template('login.html', title='Login', form=form)
+
 
 # API configuration
 TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
@@ -16,16 +75,18 @@ OPENAI_API_KEY = os.environ.get('OPENAI_KEY')
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 openai.api_key = OPENAI_API_KEY
 
+
 def get_upcoming_movies(tmbd_api_key):
     # calls to get upcoming movies -> we can process them to get chatgpt recommendations 
-    url = f'https://api.themoviedb.org/3/movie/upcoming?api_key={tmdb_api_key}'
+    url = f'https://api.themoviedb.org/3/movie/upcoming?api_key={TMDB_API_KEY}'
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()['results']
     else:
         return []
 
-    response = requests.get(url, headers=headers)
+    # response = requests.get(url, headers=headers) not sure what this does... its unreachable
+
 
 def get_movie_poster(title):
     search_url = f"{TMDB_BASE_URL}/search/movie"
@@ -65,19 +126,19 @@ def generate_recommendations(movie_choices, preferences):
                                                 "Please provide the recommendations as one json string with the key 'recommendations' "
                                                 "containing a list of 10 movies with their respective attributes. "
                                                 "Use double quotes for all strings. Here is a sample format:\n\n"
-                                                 "{\n"
-                                                 "  \"recommendations\": [\n"
-                                                 "    {\n"
-                                                 "      \"title\": \"Movie Title\",\n"
-                                                 "      \"genre\": \"Genre\",\n"
-                                                 "      \"rating\": \"8.5\",\n"
-                                                 "      \"release_date\": \"YYYY-MM-DD\"\n"
-                                                 "    },\n"
-                                                 "    ... 9 more movies ...\n"
-                                                 "  ]\n"
-                                                 "}.\n"
-                                                 "Please end with a closing curly bracket."
-                    }
+                                                "{\n"
+                                                "  \"recommendations\": [\n"
+                                                "    {\n"
+                                                "      \"title\": \"Movie Title\",\n"
+                                                "      \"genre\": \"Genre\",\n"
+                                                "      \"rating\": \"8.5\",\n"
+                                                "      \"release_date\": \"YYYY-MM-DD\"\n"
+                                                "    },\n"
+                                                "    ... 9 more movies ...\n"
+                                                "  ]\n"
+                                                "}.\n"
+                                                "Please end with a closing curly bracket."
+                     }
                 ]
             )
             return json.loads(completion.choices[0].message.content)
@@ -96,7 +157,7 @@ def process_response(response):
             'releaseDate': item['release_date']
         })
     return processed_recommendations
-        
+
 
 def process_choices_and_recommendations(movie_choices, recommendations):
     while True:
@@ -105,10 +166,11 @@ def process_choices_and_recommendations(movie_choices, recommendations):
             processed_recommendations = process_response(generate_recommendations(movie_choices, recommendations))
             return processed_recommendations
         except KeyError:
-            count+= 1
+            count += 1
+            print(
+                'There was a key error when converting the response to the proper dictionary. Retrying GPT request...')
             if count > 3:
                 return ''
-            print('There was a key error when converting the response to the proper dictionary. Retrying GPT request...')
 
 
 def modify_database(recommendations):
