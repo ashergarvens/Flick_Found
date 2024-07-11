@@ -31,6 +31,21 @@ p {
     -webkit-text-fill-color: transparent;
     font-size: 20px;
 }
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
+.form-inline {
+    background-color: #FFB11A;
+    border-radius: 5px;
+
+   &:hover {
+       background-color: #DE4B0C;
+       cursor: pointer;
+   }
+}
 .pref-container {
     background-color: #1B2230;
     text-align: center;

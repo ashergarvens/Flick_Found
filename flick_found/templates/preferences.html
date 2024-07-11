@@ -11,6 +11,16 @@
         <link href="https://fonts.googleapis.com/css2?family=Jockey+One&display=swap" rel="stylesheet">
     </head>
 <body>
+    <nav class="navbar navbar-expand-lg black">
+        <h1>Flick Found</h1>
+        <div class="collapse navbar-collapse d-flex justify-content-end" id="navbarNav">
+            <form class="form-inline">
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('logout') }}" class="btn">Logout</a>
+                {% endif %}
+            </form>
+        </div>
+    </nav>
     <div class ="pref-container">
         <h1>FlickerFy</h1>
         <form action="{{ url_for('generate') }}" id="choices_form" method="POST">
@@ -37,9 +47,6 @@
             <div class = "submit-button-container">
                 <button type="submit" id = "submit">Generate Recommendations</button>
             </div>
-            {% if session.get('user_id') %}
-                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
-                {% endif %}
         </form>
     </div>
 </body>
@@ -53,8 +60,12 @@
     const genreList = document.getElementById('genre-list');
     const hiddenChoicesField = document.getElementById('choices-hidden');
     const hiddenGenreField = document.getElementById('genre-hidden');
-    const MAX_MOVIES = 10;
-    const MAX_GENRES = 10;
+    const form = document.getElementById('choices_form');
+
+    const MAX_MOVIES = 10; 
+    const MAX_GENRES = 10; 
+
+
 
     addMovieButton.addEventListener('click', function(event) {
         addListItem(movieChoice, choicesList, hiddenChoicesField, MAX_MOVIES);
@@ -107,6 +118,16 @@
             addListItem(inputElement, list, hiddenField, maxItems);
         }
     }
+
+    form.addEventListener('submit', function(event) {
+        const movieCount = choicesList.children.length;
+        const genreCount = genreList.children.length;
+
+        if (movieCount < 1 || genreCount < 1) {
+            alert('Please add at least one movie and one genre.');
+            event.preventDefault(); 
+        }
+    });
 });
 
 </script>
