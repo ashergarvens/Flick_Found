@@ -3,34 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <title>Recommendations Results</title>
-    <style>
-        .card {
-            border: 1px solid #ccc;
-            padding: 16px;
-            margin: 16px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            display: inline-block;
-            width: 200px;
-            text-align: center;
-        }
-        .card img {
-            max-width: 100%;
-            border-radius: 8px 8px 0 0;
-        }
-        .card-title {
-            font-size: 18px;
-            margin: 16px 0 8px;
-        }
-        .card-details {
-            font-size: 14px;
-            margin: 8px 0;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlickerFy</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/results.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jockey+One&display=swap" rel="stylesheet">
+    
 </head>
 <body>
-    <div>
-        <h1>Recommendations</h1>
+    <nav class="navbar navbar-expand-lg black">
+        <h1>Flick Found</h1>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('preferences') }}">FlickerFy</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('search') }}">Watchlist</a>
+                </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0">
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                {% endif %}
+            </form>
+        </div>
+    </nav>
+    <div class = "movies-container">
+        <h2>Your Recommended Movies</h2>
         <div class="recommendations">
             {% for recommendation in recommendations %}
                 <div class="card">
