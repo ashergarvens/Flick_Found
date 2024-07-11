@@ -66,29 +66,28 @@
             {% endfor %}
         </div>
     </div>
-    <div>
-        <h1>Upcoming Movies</h1>
-        <h6>Flickerfy recommends upcoming movies based on your preferences</h6>
+    <div class = "upcoming-container">
+        <h2>Upcoming Movies/Movies Airing</h2>
         <div class="upcoming-movies">
             {% for movie in upcoming_movies %}
-                <div class="card">
-                    {% if movie['poster'] %}
+                <div class="up-card">
+                    {% if movie['poster_path'] %}
                         <img src="{{ movie['poster_path'] }}" alt="Movie Poster">
                     {% else %}
                         <img src="/static/default_poster.jpg" alt="Default Poster">
                     {% endif %}
-                    <div class="card-title">{{ movie['title'] }}</div>
-                    <div class="card-details">Genre: {{ movie['genre'] }}</div>
-                    <div class="card-details">Rating: {{ movie['rating'] }}</div>
-                    <div class="card-details">Release Date: {{ movie['releaseDate'] }}</div>
+                    <div class="title">{{ movie['title'] }}</div>
+                    <div class="details">Genre: {{ movie['genre'] }}</div>
+                    <div class="details">Rating: {{ movie['rating'] }}</div>
+                    <div class="details">Release Date: {{ movie['release_date'] }}</div>
                 </div>
             {% endfor %}
         </div>
     </div>
-    {% if session.get('user_id') %}
-                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
-                {% endif %}
-    <a href="{{ url_for('search') }}">Back to Search</a>
+    <hr>
+    <footer class = "footer">
+        <p>Flick Finder @ 2024</p>
+    </footer>
 </body>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
