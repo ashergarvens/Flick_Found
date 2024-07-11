@@ -26,6 +26,14 @@
             font-size: 14px;
             margin: 8px 0;
         }
+        .card-watchlist-button {
+            color: yellow;
+            cursor: pointer;
+        }
+        .card-reminder-button {
+            color: lightsalmon;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -42,6 +50,21 @@
                 <div class="card-details">Genre: {{ recommendation['genre'] }}</div>
                 <div class="card-details">Rating: {{ recommendation['rating'] }}</div>
                 <div class="card-details">Release Date: {{ recommendation['releaseDate'] }}</div>
+                <!-- window.location.href='{{ url_for('watchlist', movie_id=recommendation['id']) }}' -->
+                <!-- Watchlist Button
+                <form action="{{ url_for('watchlist') }}" id="watchlist-form" method="POST">
+                <div class = "watchlist-button-wrapper">
+                    <input type="text" name="watchlist-hidden" id="watchlist-hidden" hidden>
+                    <button type ="button" class="card-watchlist-button" title="Add to Watchlist" onclick="this.innerHTML='&#9733;'; addToWatchlist()">&#9734;</button>
+                </div>
+                </form>
+                -->
+                <form action="{{ url_for('reminder') }}" id="reminder-form" method="POST">
+                <div class= "reminder-button-wrapper">
+                    <input type="text" name="reminder-hidden" id="reminder-hidden" hidden>
+                    <button type ="button" class="card-reminder-button" title="Add to Calendar">&#9744;</button>
+                </div>
+                </form>
             </div>
         {% endfor %}
     </div>
@@ -50,4 +73,47 @@
                 {% endif %}
     <a href="{{ url_for('search') }}">Back to Search</a>
 </body>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    //const addWatchlistButton = document.getElementById('card-watchlist-button');
+    const addReminderButton = document.getElementById('card-reminder-button');
+    const movie = {
+        'title': document.getElementById('card-title').textContent,
+        'genre': document.getElementById('card-details').textContent,
+        'rating': document.getElementById('card-details').textContent,
+        'releaseDate': document.getElementById('card-details').textContent
+    }
+    //const hidden_watch_list = document.getElementById('watchlist-hidden');
+    const hidden_reminder_list = document.getElementById('reminder-hidden'); 
+    
+    //addWatchlistButton.addEventListener('click', function(event) {
+    //    addListItem(JSON.stringify(movie), hidden_watch_list);
+    //});
+
+    addReminderButton.addEventListener('click', function(event) {
+        // Add reminder to calendar
+        if (!(hidden_reminder_list.value.includes(JSON.stringify(movie)))) {
+            if (confirm('Add reminder to calendar?')) {
+                addListItem(JSON.stringify(movie), hidden_reminder_list);
+                document.getElementById('card-reminder-button').innerHTML = '&#9745;';
+                document.getElementById('card-reminder-button').disabled = true;
+                form = document.getElementById('reminder-form');
+                form.submit();
+            }
+        }else{
+            alert('Reminder already added');
+        }
+    });
+
+
+    function addListItem(inputElement, hiddenField) {
+        const newItemText = inputElement.value.trim();
+        if (newItemText !== '') {
+            hiddenField.value += newItemText + '`';
+            inputElement.value = ''; 
+        }
+    }
+
+    });
+</script>
 </html>
