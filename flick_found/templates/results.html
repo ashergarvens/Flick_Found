@@ -69,6 +69,9 @@
             {% endfor %}
         </div>
     </div>
+    {% if session.get('user_id') %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                {% endif %}
     <a href="{{ url_for('search') }}">Back to Search</a>
 </body>
 </html>

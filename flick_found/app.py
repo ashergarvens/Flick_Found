@@ -10,6 +10,10 @@ from forms import RegistrationForm, LoginForm
 from flask_behind_proxy import FlaskBehindProxy
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+from functools import wraps
+
 
 app = Flask(__name__)
 proxied = FlaskBehindProxy(app)
@@ -113,13 +117,27 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             session['user_id'] = user.id
-            print(session['user_id'])
             flash(f'Login successful for {form.email.data}', 'success')
             return redirect(url_for('results'))
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
+
+@app.route("/logout")
+def logout():
+    session.pop('user_id', None)
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 # API configuration
 TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
@@ -296,11 +314,13 @@ def modify_database(recommendations):
 
 
 @app.route('/preferences')
+@login_required
 def preferences():
     return render_template('preferences.html')
 
 
 @app.route('/generate', methods=['POST'])
+@login_required
 def generate():
     movie_choices = request.form.get('choices-hidden').split('`')
     genres = request.form.get('genre-hidden').split('`')
@@ -316,6 +336,7 @@ def generate():
 
 
 @app.route('/search', methods=['GET', 'POST'])
+@login_required
 def search():
     if request.method == 'POST':
         genre = request.form['genre']

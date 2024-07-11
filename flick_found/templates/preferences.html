@@ -1,71 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Movie Recommendations Bot</title>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FlickerFy</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/preferences.css') }}">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Jockey+One&display=swap" rel="stylesheet">
+    </head>
 <body>
-    <h1>Welcome to Movie Recommendations Bot</h1>
-    <form action="{{ url_for('generate') }}" id="choices_form" method="POST">
-        <input type="text" name="choices-hidden" id="choices-hidden" hidden>
-        <input type="text" name="genre-hidden" id="genre-hidden" hidden>
-        <label for="movie-choice">Choices (up to 5 movies):</label><br>
-        <input type="text" name="choices" id="movie-choice" placeholder="Enter movie here...">
-        <button type="button" id="add-movie-button"></button><br><br>
-        <ul id="choices-list"></ul>
-        <label for="genre-choice">Genre Preference:</label>
-        <input type="text" name="genres" id="genre-choice" placeholder="Enter genre here...">
-        <button type="button" id="add-genre-button"></button><br><br>
-        <ul id="genre-list"> </ul>
-        <button type="submit">Generate Recommendations</button>
-    </form>
-    <a href="{{ url_for('search') }}">Search Recommendations</a>
+    <div class ="pref-container">
+        <h1>FlickerFy</h1>
+        <form action="{{ url_for('generate') }}" id="choices_form" method="POST">
+            <input type="text" name="choices-hidden" id="choices-hidden" hidden>
+            <input type="text" name="genre-hidden" id="genre-hidden" hidden>
+            <p>Choices(up to 10 movies):</p>
+            <div class = "input-button-wrapper">
+                <input type="text" name="choices" id="movie-choice" placeholder="Enter movie here...">
+                <button type="button" id="add-movie-button">Enter</button><br><br>
+            </div>
+            <div class = "list-wrapper">
+                <ul id="choices-list"></ul>
+            </div>
+            <div class = "genre-container">
+                <p>Genre Preferences(up to 10 genres):</p>
+                <div class = "input-button-wrapper">
+                <input type="text" name="genres" id="genre-choice" placeholder="Enter genre here...">
+                <button type="button" id="add-genre-button">Enter</button><br><br>
+            </div>
+            <div class = "list-wrapper">
+                <ul id="genre-list"> </ul>
+            </div>
+            </div>
+            <div class = "submit-button-container">
+                <button type="submit" id = "submit">Generate Recommendations</button>
+            </div>
+            {% if session.get('user_id') %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                {% endif %}
+        </form>
+    </div>
 </body>
 <script>
 
     document.addEventListener('DOMContentLoaded', function() {
-        const addMovieButton = document.getElementById('add-movie-button');
-        const addGenreButton = document.getElementById('add-genre-button');
-        const movieChoice = document.getElementById('movie-choice');
-        const choicesList = document.getElementById('choices-list');
-        const genreChoice = document.getElementById('genre-choice');
-        const genreList = document.getElementById('genre-list');
-        const hiddenChoicesField = document.getElementById('choices-hidden')
-        const hiddenGenreField = document.getElementById('genre-hidden')
+    const addMovieButton = document.getElementById('add-movie-button');
+    const addGenreButton = document.getElementById('add-genre-button');
+    const movieChoice = document.getElementById('movie-choice');
+    const choicesList = document.getElementById('choices-list');
+    const genreChoice = document.getElementById('genre-choice');
+    const genreList = document.getElementById('genre-list');
+    const hiddenChoicesField = document.getElementById('choices-hidden');
+    const hiddenGenreField = document.getElementById('genre-hidden');
 
-        addMovieButton.addEventListener('click', function(event) {
-            const newItemText = movieChoice.value.trim();
-            if (newItemText !== '') {
-                addItemToList(newItemText, choicesList);
-                hiddenChoicesField.value += newItemText + '`'
-                movieChoice.value = ''; // Clear the input field
-            }
-        });
+    const MAX_MOVIES = 10; 
+    const MAX_GENRES = 10; 
 
-        addGenreButton.addEventListener('click', function(event) {
-            const newItemText = genreChoice.value.trim();
-            if (newItemText !== '') {
-                addItemToList(newItemText, genreList);
-                hiddenGenreField.value += newItemText + '`'
-                genreChoice.value = ''; // Clear the input field
-            }
-        });
-
-        function addItemToList(itemText, list) {
-            const li = document.createElement('li');
-            li.textContent = itemText;
-            list.appendChild(li);
-        }
-
-        movieChoice.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                const newItemText = movieChoice.value.trim();
-                if (newItemText !== '') {
-                    addItemToList(newItemText);
-                    movieChoice.value = ''; // Clear the input field
-                }
-            }
-        });
+    addMovieButton.addEventListener('click', function(event) {
+        addListItem(movieChoice, choicesList, hiddenChoicesField, MAX_MOVIES);
     });
+
+    addGenreButton.addEventListener('click', function(event) {
+        addListItem(genreChoice, genreList, hiddenGenreField, MAX_GENRES);
+    });
+
+    function addListItem(inputElement, list, hiddenField, maxItems) {
+        const newItemText = inputElement.value.trim();
+        if (newItemText !== '') {
+            if (list.children.length < maxItems) {
+                addItemToList(newItemText, list, hiddenField);
+            } else {
+                alert(`You can only add up to ${maxItems} items!`);
+            }
+            inputElement.value = ''; 
+        }
+    }
+
+    function addItemToList(itemText, list, hiddenField) {
+        const li = document.createElement('li');
+        const text = document.createTextNode(itemText + " ");
+        const removeButton = document.createElement('button');
+        removeButton.textContent = 'x';
+        removeButton.classList.add('remove-button');
+        removeButton.addEventListener('click', function() {
+            list.removeChild(li);
+            hiddenField.value = hiddenField.value.split('`').filter(i => i !== itemText).join('`');
+        });
+        li.appendChild(removeButton);
+        li.appendChild(text);
+        list.appendChild(li);
+        hiddenField.value += itemText + '`';
+    }
+
+    // Handle Enter key press for movie and genre inputs
+    movieChoice.addEventListener('keypress', function(event) {
+        handleKeyPress(event, movieChoice, choicesList, hiddenChoicesField, MAX_MOVIES);
+    });
+
+    genreChoice.addEventListener('keypress', function(event) {
+        handleKeyPress(event, genreChoice, genreList, hiddenGenreField, MAX_GENRES);
+    });
+
+    function handleKeyPress(event, inputElement, list, hiddenField, maxItems) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent form submission
+            addListItem(inputElement, list, hiddenField, maxItems);
+        }
+    }
+});
+
 </script>
 </html>
