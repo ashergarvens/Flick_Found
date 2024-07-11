@@ -46,6 +46,22 @@
                     <div class="card-details">Genre: {{ recommendation.genre }}</div>
                     <div class="card-details">Rating: {{ recommendation.rating }}</div>
                     <div class="card-details">Release Date: {{ recommendation.release_date }}</div>
+
+                    <!-- window.location.href='{{ url_for('watchlist', movie_id=recommendation['id']) }}' -->
+                    <!-- Watchlist Button
+                    <form action="{{ url_for('watchlist') }}" id="watchlist-form" method="POST">
+                    <div class = "watchlist-button-wrapper">
+                        <input type="text" name="watchlist-hidden" id="watchlist-hidden" hidden>
+                        <button type ="button" class="card-watchlist-button" title="Add to Watchlist" onclick="this.innerHTML='&#9733;'; addToWatchlist()">&#9734;</button>
+                    </div>
+                    </form>
+                    -->
+                    <form action="{{ url_for('reminder') }}" id="reminder-form" method="POST">
+                    <div class= "reminder-button-wrapper">
+                        <input type="text" name="reminder-hidden" id="reminder-hidden" hidden>
+                        <button type ="button" class="card-reminder-button" title="Add to Calendar">&#9744;</button>
+                    </div>
+                    </form>
                 </div>
             {% endfor %}
         </div>
