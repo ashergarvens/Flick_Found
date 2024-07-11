@@ -129,6 +129,9 @@ def register():
 
 
 @app.route('/')
+def root():
+    return redirect(url_for('login'))
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -365,6 +368,7 @@ def generate():
     return redirect(url_for('results'))
 
 @app.route('/results')
+@login_required
 def results():
     if 'user_id' not in session:
         print('ERROR')
