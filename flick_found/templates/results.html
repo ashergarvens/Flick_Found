@@ -29,7 +29,7 @@
                     <a class="nav-link" href="{{ url_for('preferences') }}">FlickerFy</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('search') }}">Watchlist</a>
+                    <a class="nav-link" href="{{ url_for('watchlist') }}">Watchlist</a>
                 </li>
             </ul>
             <form class="form-inline">
@@ -50,8 +50,8 @@
                         <img src="/static/default_poster.jpg" alt="Default Poster">
                     {% endif %}
                     <div class="card-title">{{ recommendation.title }}</div>
-                    <div class="card-details">Genre: {{ recommendation.genre }}</div>
-                    <div class="card-details">Rating: {{ recommendation.rating }}</div>
+                    <div class="card-details" >Genre: {{ recommendation.genre }}</div>
+                    <div class="card-details" >Rating: {{ recommendation.rating }}</div>
                     <div class="card-details">Release Date: {{ recommendation.release_date }}</div>
 
                     <!-- window.location.href='{{ url_for('watchlist', movie_id=recommendation['id']) }}' -->
@@ -63,12 +63,7 @@
                     </div>
                     </form>
                     -->
-                    <form action="{{ url_for('reminder') }}" id="reminder-form" method="POST">
-                    <div class= "reminder-button-wrapper">
-                        <input type="text" name="reminder-hidden" id="reminder-hidden" hidden>
-                        <button type ="button" class="card-reminder-button" title="Add to Calendar">&#9744;</button>
-                    </div>
-                    </form>
+                   
                 </div>
             {% endfor %}
         </div>
@@ -83,10 +78,17 @@
                     {% else %}
                         <img src="/static/default_poster.jpg" alt="Default Poster">
                     {% endif %}
-                    <div class="title">{{ movie['title'] }}</div>
-                    <div class="details">Genre: {{ movie['genre'] }}</div>
-                    <div class="details">Rating: {{ movie['rating'] }}</div>
-                    <div class="details">Release Date: {{ movie['release_date'] }}</div>
+                    <div class="title" id = "title">{{ movie['title'] }}</div>
+                    <div class="details" id = "genre">Genre: {{ movie['genre'] }}</div>
+                    <div class="details" id = "rating">Rating: {{ movie['rating'] }}</div>
+                    <div class="details" id = "release">Release Date: {{ movie['release_date'] }}</div>
+
+                    <form action="{{ url_for('reminder') }}" id="reminder-form" method="POST">
+                        <div class= "reminder-button-wrapper">
+                            <input type="text" name="reminder-hidden" id="reminder-hidden" hidden>
+                            <button type ="button" id = "reminder-button" title="Add to Calendar">&#9744;</button>
+                        </div>
+                    </form>
                 </div>
             {% endfor %}
         </div>
@@ -113,12 +115,12 @@
 
     document.addEventListener('DOMContentLoaded', function() {
     //const addWatchlistButton = document.getElementById('card-watchlist-button');
-    const addReminderButton = document.getElementById('card-reminder-button');
+    const addReminderButton = document.getElementById('reminder-button');
     const movie = {
-        'title': document.getElementById('card-title').textContent,
-        'genre': document.getElementById('card-details').textContent,
-        'rating': document.getElementById('card-details').textContent,
-        'releaseDate': document.getElementById('card-details').textContent
+        'title': document.getElementById('title').textContent,
+        'genre': document.getElementById('genre').textContent,
+        'rating': document.getElementById('rating').textContent,
+        'releaseDate': document.getElementById('release').textContent
     }
     //const hidden_watch_list = document.getElementById('watchlist-hidden');
     const hidden_reminder_list = document.getElementById('reminder-hidden'); 
@@ -133,7 +135,6 @@
             if (confirm('Add reminder to calendar?')) {
                 addListItem(JSON.stringify(movie), hidden_reminder_list);
                 document.getElementById('card-reminder-button').innerHTML = '&#9745;';
-                document.getElementById('card-reminder-button').disabled = true;
                 form = document.getElementById('reminder-form');
                 form.submit();
             }
@@ -144,7 +145,7 @@
 
 
     function addListItem(inputElement, hiddenField) {
-        const newItemText = inputElement.value.trim();
+        const newItemText = inputElement.trim();
         if (newItemText !== '') {
             hiddenField.value += newItemText + '`';
             inputElement.value = ''; 
