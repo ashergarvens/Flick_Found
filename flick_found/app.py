@@ -1,6 +1,4 @@
 import os
-import pandas as pd
-from sqlalchemy import create_engine, text
 import requests
 import openai
 from openai import OpenAI
@@ -44,6 +42,9 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
 
+    genre_preferences = db.relationship('GenrePreferences', backref='user', lazy=True)
+    movie_preferences = db.relationship('MoviePreferences', backref='user', lazy=True)
+    
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
@@ -52,6 +53,33 @@ class User(db.Model):
 
     def __repr__(self):
         return f"User('{self.email}')"
+
+
+class RecommendedMovies(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    release_date = db.Column(db.String(15), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    genre = db.Column(db.String(120), nullable=False)
+
+
+class GenrePreferences(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    genre = db.Column(db.String(20), nullable=False)  # Assuming storing genre as a string
+
+    def __repr__(self):
+        return f"Genre_Preferences(user_id={self.user_id}, genre={self.genre})"
+
+
+class MoviePreferences(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    movie = db.Column(db.String(100), nullable=False)  # Can be adjusted we have long*** movie titles
+
+    def __repr__(self):
+        return f"Movie_Preferences(user_id={self.user_id}, genre={self.movie})"
 
 
 with app.app_context():
@@ -67,6 +95,18 @@ with app.app_context():
 # @app.route("/about")
 # def second_page():
 #     return render_template('about.html', subtitle='about', text='This is the second page!')
+def save_genre_preferences(user_id: int, genres: list[str]):
+    for genre in genres:
+        db.session.add(GenrePreferences(user_id=user_id, genre=genre))
+    db.session.commit()
+    print(f'Genre preferences saved for User:{user_id}')
+
+
+def save_movie_preferences(user_id, movie_choices):
+    for movie in movie_choices:
+        db.session.add(MoviePreferences(user_id=user_id, movie=movie))
+    db.session.commit()
+    print(f'Movie preferences saved for User:{user_id}')
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -74,11 +114,12 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():  # checks if entries are valid
         user = User(email=form.email.data)
+        print(user.id)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
         flash(f'Account created for {form.email.data}!', 'success')
-        return redirect(url_for('preferences'))  # if so - send to home page
+        return redirect(url_for('login'))  # if so - send to home page
     return render_template('register.html', title='Register', form=form)
 
 
@@ -91,6 +132,11 @@ def login():
         if user and user.check_password(form.password.data):
             session['user_id'] = user.id
             flash(f'Login successful for {form.email.data}', 'success')
+            genre_preference_count = GenrePreferences.query.filter_by(user_id=user.id).count()
+            movie_preference_count = MoviePreferences.query.filter_by(user_id=user.id).count()
+            print(genre_preference_count, movie_preference_count)
+            if genre_preference_count == 0 or movie_preference_count == 0:
+                return redirect(url_for('preferences'))
             return redirect(url_for('results'))
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
@@ -103,6 +149,7 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -110,7 +157,9 @@ def login_required(f):
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
+
     return decorated_function
+
 
 # API configuration
 TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
@@ -119,13 +168,56 @@ TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 openai.api_key = OPENAI_API_KEY
 
 
-def get_upcoming_movies(tmbd_api_key):
-    # calls to get upcoming movies -> we can process them to get chatgpt recommendations 
+def get_matched_upcoming_movies():
+    genres = {
+        28: "Action",
+        12: "Adventure",
+        16: "Animation",
+        35: "Comedy",
+        80: "Crime",
+        99: "Documentary",
+        18: "Drama",
+        10751: "Family",
+        14: "Fantasy",
+        36: "History",
+        27: "Horror",
+        10402: "Music",
+        9648: "Mystery",
+        10749: "Romance",
+        878: "Science Fiction",
+        10770: "TV Movie",
+        53: "Thriller",
+        10752: "War",
+        37: "Western"
+    }
+
+    def convert_id_to_genre_name(genre_id):
+        return genres.get(genre_id, "Unknown")
+
+    user_preferred_genres = GenrePreferences.query.filter_by(user_id=session['user_id']).all()
+    preferred_genre_names = {genre_preference.genre for genre_preference in user_preferred_genres}
+    upcoming_results = []
+
     url = f'https://api.themoviedb.org/3/movie/upcoming?api_key={TMDB_API_KEY}'
     response = requests.get(url)
+
     if response.status_code == 200:
-        return response.json()['results']
+        upcoming_movies_json = response.json().get('results', [])
+        for movie in upcoming_movies_json:
+            movie_genre_names = {convert_id_to_genre_name(genre_id) for genre_id in movie['genre_ids']}
+            if preferred_genre_names & movie_genre_names:
+                full_genre_list = [convert_id_to_genre_name(genre_id) for genre_id in movie['genre_ids']]
+                movie_entry = {
+                    'title': movie['title'],
+                    'release_date': movie['release_date'],
+                    'rating': movie['vote_average'],
+                    'poster_path': f"https://image.tmdb.org/t/p/w500{movie['poster_path']}",
+                    'genre': ', '.join(full_genre_list)
+                }
+                upcoming_results.append(movie_entry)
+        return upcoming_results
     else:
+        print(f"Error fetching upcoming movies: {response.status_code}")
         return []
 
     # response = requests.get(url, headers=headers) not sure what this does... its unreachable
@@ -164,10 +256,10 @@ def generate_recommendations(movie_choices, preferences):
                                                   f"{preferences}."},
 
                     {"role": "user", "content": "You are a movie recommendation bot that takes in similar movies "
-                                                "and gives 10 specific movie recommendations as a response in a json format "
+                                                "and gives 30 specific movie recommendations as a response in a json format "
                                                 "with the following keys: title, genre, rating out of 10 from IMDB, release date. "
                                                 "Please provide the recommendations as one json string with the key 'recommendations' "
-                                                "containing a list of 10 movies with their respective attributes. "
+                                                "containing a list of 30 movies with their respective attributes. "
                                                 "Use double quotes for all strings. Here is a sample format:\n\n"
                                                 "{\n"
                                                 "  \"recommendations\": [\n"
@@ -177,7 +269,7 @@ def generate_recommendations(movie_choices, preferences):
                                                 "      \"rating\": \"8.5\",\n"
                                                 "      \"release_date\": \"YYYY-MM-DD\"\n"
                                                 "    },\n"
-                                                "    ... 9 more movies ...\n"
+                                                "    ... 29 more movies ...\n"
                                                 "  ]\n"
                                                 "}.\n"
                                                 "Please end with a closing curly bracket."
@@ -197,7 +289,7 @@ def process_response(response):
             'title': item['title'],
             'genre': item['genre'],
             'rating': item['rating'],
-            'releaseDate': item['release_date']
+            'release_date': item['release_date']
         })
     return processed_recommendations
 
@@ -217,10 +309,30 @@ def process_choices_and_recommendations(movie_choices, recommendations):
 
 
 def modify_database(recommendations):
-    df = pd.DataFrame.from_dict(recommendations)
-    engine = create_engine('sqlite:///media_recommendations.db')
-    if not df.empty:
-        df.to_sql('recommendations', con=engine, if_exists='replace', index=False)
+    user_id = session.get('user_id')
+    if not user_id:
+        print("User ID not found in session.")
+        return
+
+    try:
+        for recommendation in recommendations:
+            title = recommendation.get('title')
+            genre = recommendation.get('genre')
+            rating = recommendation.get('rating')
+            release_date = recommendation.get('release_date')
+
+            if title and genre and rating and release_date:
+                recommend_movie = RecommendedMovies(
+                    title=title, genre=genre, rating=rating, release_date=release_date, user_id=user_id)
+                db.session.add(recommend_movie)
+            else:
+                print(f"Skipping invalid recommendation: {recommendation}")
+
+        db.session.commit()
+        print('Movies successfully added')
+    except Exception as e:
+        db.session.rollback()
+        print(f"An error occurred: {e}")
 
 
 @app.route('/preferences')
@@ -229,13 +341,14 @@ def preferences():
     return render_template('preferences.html')
 
 
-
 @app.route('/generate', methods=['POST'])
 @login_required
 def generate():
-    choices = request.form.get('choices-hidden').split('`')
+    movie_choices = request.form.get('choices-hidden').split('`')
     genres = request.form.get('genre-hidden').split('`')
-    recommendations = process_choices_and_recommendations(choices, genres)
+    save_genre_preferences(session['user_id'], genres)
+    save_movie_preferences(session['user_id'], movie_choices)
+    recommendations = process_choices_and_recommendations(movie_choices, genres)
     if recommendations:
         modify_database(recommendations)
     else:
@@ -244,23 +357,18 @@ def generate():
     return redirect(url_for('results'))
 
 @app.route('/results')
-@app.route('/results/<genre>')
-@login_required
-def results(genre=None):
-    engine = create_engine('sqlite:///media_recommendations.db')
-    query = "SELECT * FROM recommendations"
-    if genre:
-        query += f" WHERE genre LIKE '%{genre}%'"
+def results():
+    if 'user_id' not in session:
+        print('ERROR')
+    recommendations = RecommendedMovies.query.filter_by(user_id=session['user_id']).limit(30).all()
 
-    with engine.connect() as connection:
-        result = connection.execute(text(query)).fetchall()
-        df = pd.DataFrame(result, columns=['title', 'genre', 'rating', 'releaseDate'])
-
-    recommendations = df.to_dict(orient='records')
     for rec in recommendations:
-        rec['poster'] = get_movie_poster(rec['title'])
+        rec.poster = get_movie_poster(rec.title)
+    upcoming_movies = get_matched_upcoming_movies()
 
-    return render_template('results.html', recommendations=recommendations)
+    return render_template('results.html',
+                           # recommendations is a queryObject, upcoming is a Dict
+                           recommendations=recommendations, upcoming_movies=upcoming_movies)
 
 @app.route('/watchlist', methods=['GET', 'POST'])
 @login_required

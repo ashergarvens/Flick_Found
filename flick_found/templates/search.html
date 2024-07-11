@@ -2,15 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Search Recommendations</title>
+    <title>Watchlist</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/watchlist.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jockey+One&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Search Recommendations by Genre</h1>
-    <form action="{{ url_for('watchlist') }}" method="POST">
-        <label for="genre">Genre:</label>
-        <input type="text" id="genre" name="genre">
-        <button type="submit">Search</button>
-    </form>
-    <a href="{{ url_for('results') }}">Back to Home</a>
+    <nav class="navbar navbar-expand-lg black">
+        <h1>Flick Found</h1>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('preferences') }}">FlickerFy</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('results') }}">Recommendations</a>
+                </li>
+            </ul>
+            <form class="form-inline">
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('logout') }}" class="btn">Logout</a>
+                {% endif %}
+            </form>
+        </div>
+    </nav>
+    <div class = "movies-container">
+        <h2>Your Watchlist</h2>
+        <div class="watchlist">
+            {% for recommendation in recommendations %}
+                <div class="card">
+                    {% if recommendation['poster'] %}
+                        <img src="{{ recommendation['poster'] }}" alt="Movie Poster">
+                    {% else %}
+                        <img src="/static/default_poster.jpg" alt="Default Poster">
+                    {% endif %}
+                    <div class="card-title"></div>
+                    <div class="card-details">Genre: </div>
+                    <div class="card-details">Rating: </div>
+                    <div class="card-details">Release Date: </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
 </body>
 </html>
