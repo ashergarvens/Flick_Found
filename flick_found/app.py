@@ -1,6 +1,4 @@
 import os
-import pandas as pd
-from sqlalchemy import create_engine, text
 import requests
 import openai
 from openai import OpenAI
@@ -13,7 +11,6 @@ from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from functools import wraps
-
 
 app = Flask(__name__)
 proxied = FlaskBehindProxy(app)
@@ -101,11 +98,12 @@ def register():
     form = RegistrationForm()
     if form.validate_on_submit():  # checks if entries are valid
         user = User(email=form.email.data)
+        print(user.id)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
         flash(f'Account created for {form.email.data}!', 'success')
-        return redirect(url_for('preferences'))  # if so - send to home page
+        return redirect(url_for('login'))  # if so - send to home page
     return render_template('register.html', title='Register', form=form)
 
 
@@ -118,6 +116,11 @@ def login():
         if user and user.check_password(form.password.data):
             session['user_id'] = user.id
             flash(f'Login successful for {form.email.data}', 'success')
+            genre_preference_count = GenrePreferences.query.filter_by(user_id=user.id).count()
+            movie_preference_count = MoviePreferences.query.filter_by(user_id=user.id).count()
+            print(genre_preference_count, movie_preference_count)
+            if genre_preference_count == 0 or movie_preference_count == 0:
+                return redirect(url_for('preferences'))
             return redirect(url_for('results'))
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
@@ -130,6 +133,7 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
 
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -137,10 +141,12 @@ def login_required(f):
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
+
     return decorated_function
 
+
 # API configuration
-TMDB_API_KEY = os.environ.get('TMDB_API_KEY') or '6ee03c9fb5b2144cd1ce55e22fc54381'
+TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
 OPENAI_API_KEY = os.environ.get('OPENAI_KEY')
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 openai.api_key = OPENAI_API_KEY
@@ -344,6 +350,7 @@ def search():
     return render_template('search.html')
 
 
+@login_required
 @app.route('/results')
 def results():
     if 'user_id' not in session:
