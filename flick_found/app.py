@@ -349,7 +349,7 @@ def search():
 def results():
     if 'user_id' not in session:
         print('ERROR')
-    recommendations = RecommendedMovies.query.filter_by(user_id=session['user_id']).limit(10).all()
+    recommendations = RecommendedMovies.query.filter_by(user_id=session['user_id']).limit(30).all()
     for rec in recommendations:
         rec.poster = get_movie_poster(rec.title)
     upcoming_movies = get_matched_upcoming_movies()
