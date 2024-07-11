@@ -26,15 +26,15 @@ class User(db.Model):
 with app.app_context():
   db.create_all()
 
-# @app.route("/")
-# @app.route("/home")
-# def home():
-#     return render_template('home.html', subtitle='Home Page', text='This is the home page!')
+@app.route("/")
+@app.route("/home")
+def home():
+    return render_template('home.html', subtitle='Home Page', text='This is the home page!')
 
 
-# @app.route("/about")
-# def second_page():
-#     return render_template('about.html', subtitle='about', text='This is the second page!')
+@app.route("/about")
+def second_page():
+    return render_template('about.html', subtitle='about', text='This is the second page!')
 
 
 @app.route("/register", methods=['GET', 'POST'])
