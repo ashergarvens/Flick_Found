@@ -38,17 +38,40 @@
             {% for recommendation in recommendations %}
                 <div class="card">
                     {% if recommendation['poster'] %}
-                        <img src="{{ recommendation['poster'] }}" alt="Movie Poster">
+                        <img src="{{ recommendation.poster }}" alt="Movie Poster">
                     {% else %}
                         <img src="/static/default_poster.jpg" alt="Default Poster">
                     {% endif %}
-                    <div class="card-title">{{ recommendation['title'] }}</div>
-                    <div class="card-details">Genre: {{ recommendation['genre'] }}</div>
-                    <div class="card-details">Rating: {{ recommendation['rating'] }}</div>
-                    <div class="card-details">Release Date: {{ recommendation['releaseDate'] }}</div>
+                    <div class="card-title">{{ recommendation.title }}</div>
+                    <div class="card-details">Genre: {{ recommendation.genre }}</div>
+                    <div class="card-details">Rating: {{ recommendation.rating }}</div>
+                    <div class="card-details">Release Date: {{ recommendation.release_date }}</div>
                 </div>
             {% endfor %}
         </div>
     </div>
+    <div>
+        <h1>Upcoming Movies</h1>
+        <h6>Flickerfy recommends upcoming movies based on your preferences</h6>
+        <div class="upcoming-movies">
+            {% for movie in upcoming_movies %}
+                <div class="card">
+                    {% if movie['poster'] %}
+                        <img src="{{ movie['poster_path'] }}" alt="Movie Poster">
+                    {% else %}
+                        <img src="/static/default_poster.jpg" alt="Default Poster">
+                    {% endif %}
+                    <div class="card-title">{{ movie['title'] }}</div>
+                    <div class="card-details">Genre: {{ movie['genre'] }}</div>
+                    <div class="card-details">Rating: {{ movie['rating'] }}</div>
+                    <div class="card-details">Release Date: {{ movie['releaseDate'] }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% if session.get('user_id') %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                {% endif %}
+    <a href="{{ url_for('search') }}">Back to Search</a>
 </body>
 </html>

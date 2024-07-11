@@ -53,9 +53,8 @@
     const genreList = document.getElementById('genre-list');
     const hiddenChoicesField = document.getElementById('choices-hidden');
     const hiddenGenreField = document.getElementById('genre-hidden');
-
-    const MAX_MOVIES = 10; 
-    const MAX_GENRES = 10; 
+    const MAX_MOVIES = 10;
+    const MAX_GENRES = 10;
 
     addMovieButton.addEventListener('click', function(event) {
         addListItem(movieChoice, choicesList, hiddenChoicesField, MAX_MOVIES);
@@ -73,7 +72,7 @@
             } else {
                 alert(`You can only add up to ${maxItems} items!`);
             }
-            inputElement.value = ''; 
+            inputElement.value = '';
         }
     }
 
