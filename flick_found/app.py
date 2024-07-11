@@ -22,8 +22,8 @@ import urllib3
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+# from googleapiclient.discovery import build
+# from googleapiclient.errors import HttpError
 
 
 SCOPES = ['https://www.googleapis.com/auth/calendar',
@@ -384,6 +384,7 @@ def watchlist():
         return redirect(url_for('results', genre=genre))
     return render_template('search.html')
 
+
 @app.route('/reminder', methods=['POST'])
 @login_required
 def reminder():
@@ -416,8 +417,7 @@ def reminder():
             print(f"{filename} has been reloaded.")
         else:
             print(f"{filename} does not exist.")
-        
-
+    
     # Create Google Calendar event
     movie_reminders_list = request.form.get('reminder-hidden').split('`')
     movie = movie_reminders_list[-1]
