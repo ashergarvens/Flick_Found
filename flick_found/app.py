@@ -96,14 +96,17 @@ def save_movie_preferences(user_id, movie_choices):
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
-    if form.validate_on_submit():  # checks if entries are valid
+    if form.validate_on_submit():  
+        existing_user = User.query.filter_by(email=form.email.data).first()
+        if existing_user:
+            flash('Email already taken. Please use a different email.', 'danger')
+            return redirect(url_for('register'))
         user = User(email=form.email.data)
-        print(user.id)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
         flash(f'Account created for {form.email.data}!', 'success')
-        return redirect(url_for('login'))  # if so - send to home page
+        return redirect(url_for('login'))  
     return render_template('register.html', title='Register', form=form)
 
 
@@ -118,12 +121,12 @@ def login():
             flash(f'Login successful for {form.email.data}', 'success')
             genre_preference_count = GenrePreferences.query.filter_by(user_id=user.id).count()
             movie_preference_count = MoviePreferences.query.filter_by(user_id=user.id).count()
-            print(genre_preference_count, movie_preference_count)
             if genre_preference_count == 0 or movie_preference_count == 0:
                 return redirect(url_for('preferences'))
             return redirect(url_for('results'))
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
+            return redirect(url_for('login'))
     return render_template('login.html', title='Login', form=form)
 
 
