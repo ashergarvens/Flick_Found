@@ -105,6 +105,7 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.password == form.password.data:
             session['user_id'] = user.id
+            print(session['user_id'])
             flash(f'Login successful for {form.email.data}', 'success')
             return redirect(url_for('results'))
         else:
@@ -113,7 +114,7 @@ def login():
 
 
 # API configuration
-TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
+TMDB_API_KEY = os.environ.get('TMDB_API_KEY') or '6ee03c9fb5b2144cd1ce55e22fc54381'
 OPENAI_API_KEY = os.environ.get('OPENAI_KEY')
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 openai.api_key = OPENAI_API_KEY
@@ -143,33 +144,32 @@ def get_matched_upcoming_movies():
     }
 
     def convert_id_to_genre_name(genre_id):
-        return genres[int(genre_id)]
+        return genres.get(genre_id, "Unknown")
 
     user_preferred_genres = GenrePreferences.query.filter_by(user_id=session['user_id']).all()
-    # Access genre by doing loop with genre_preference.genre
-    results = []
+    preferred_genre_names = {genre_preference.genre for genre_preference in user_preferred_genres}
+    upcoming_results = []
 
-    # calls to get upcoming movies -> we can process them to get chatgpt recommendations 
     url = f'https://api.themoviedb.org/3/movie/upcoming?api_key={TMDB_API_KEY}'
     response = requests.get(url)
+
     if response.status_code == 200:
-        upcoming_movies_json = response.json()['results']
+        upcoming_movies_json = response.json().get('results', [])
         for movie in upcoming_movies_json:
-            for genre_id in movie['genre_ids']:
-                genre_name = convert_id_to_genre_name(genre_id)
-                if genre_name in user_preferred_genres:
-                    full_genre_list = [convert_id_to_genre_name(genre_id) for genre_id in movie['genre_ids']]
-                    movie_entry = {
-                        'title': movie['title'],
-                        'release_date': movie['release_date'],
-                        'rating': movie['vote_average'],
-                        'poster_path': movie['poster_path'],
-                        'genre': ', '.join(full_genre_list)
-                    }
-                    results.append(movie_entry)
-                    break
-        return results
+            movie_genre_names = {convert_id_to_genre_name(genre_id) for genre_id in movie['genre_ids']}
+            if preferred_genre_names & movie_genre_names:
+                full_genre_list = [convert_id_to_genre_name(genre_id) for genre_id in movie['genre_ids']]
+                movie_entry = {
+                    'title': movie['title'],
+                    'release_date': movie['release_date'],
+                    'rating': movie['vote_average'],
+                    'poster_path': f"https://image.tmdb.org/t/p/w500{movie['poster_path']}",
+                    'genre': ', '.join(full_genre_list)
+                }
+                upcoming_results.append(movie_entry)
+        return upcoming_results
     else:
+        print(f"Error fetching upcoming movies: {response.status_code}")
         return []
 
     # response = requests.get(url, headers=headers) not sure what this does... its unreachable
@@ -241,7 +241,7 @@ def process_response(response):
             'title': item['title'],
             'genre': item['genre'],
             'rating': item['rating'],
-            'releaseDate': item['release_date']
+            'release_date': item['release_date']
         })
     return processed_recommendations
 
@@ -317,12 +317,15 @@ def search():
 
 @app.route('/results')
 def results():
-    recommendations = RecommendedMovies.query.filter(user_id=session.get('user_id')).limit(10).all()
+    if 'user_id' not in session:
+        print('ERROR')
+    recommendations = RecommendedMovies.query.filter_by(user_id=session['user_id']).limit(10).all()
     for rec in recommendations:
         rec.poster = get_movie_poster(rec.title)
     upcoming_movies = get_matched_upcoming_movies()
 
     return render_template('results.html',
+                           # recommendations is a queryObject, upcoming is a Dict
                            recommendations=recommendations, upcoming_movies=upcoming_movies)
 
 
