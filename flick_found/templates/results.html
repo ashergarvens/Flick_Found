@@ -14,6 +14,13 @@
     
 </head>
 <body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     <nav class="navbar navbar-expand-lg black">
         <h1>Flick Found</h1>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -90,6 +97,20 @@
     </footer>
 </body>
 <script>
+
+    // Function to remove flash messages after a few seconds
+    function removeFlashMessages() {
+        const flashMessages = document.querySelectorAll('.alert');
+        flashMessages.forEach((message) => {
+            setTimeout(() => {
+                message.style.display = 'none';
+            }, 3000); // 3000 milliseconds = 3 seconds
+        });
+    }
+    
+    // Run the function to remove flash messages
+    document.addEventListener('DOMContentLoaded', removeFlashMessages);
+
     document.addEventListener('DOMContentLoaded', function() {
     //const addWatchlistButton = document.getElementById('card-watchlist-button');
     const addReminderButton = document.getElementById('card-reminder-button');
@@ -131,5 +152,6 @@
     }
 
     });
+
 </script>
 </html>
