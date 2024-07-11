@@ -42,10 +42,10 @@
                     {% else %}
                         <img src="/static/default_poster.jpg" alt="Default Poster">
                     {% endif %}
-                    <div class="card-title">{{ recommendation.title }}</div>
-                    <div class="card-details">Genre: {{ recommendation.genre }}</div>
-                    <div class="card-details">Rating: {{ recommendation.rating }}</div>
-                    <div class="card-details">Release Date: {{ recommendation.release_date }}</div>
+                    <div class="card-title" id="title">{{ recommendation.title }}</div>
+                    <div class="card-details" id="genre">Genre: {{ recommendation.genre }}</div>
+                    <div class="card-details" id="rating">Rating: {{ recommendation.rating }}</div>
+                    <div class="card-details" id="realease-date">Release Date: {{ recommendation.release_date }}</div>
 
                     <!-- window.location.href='{{ url_for('watchlist', movie_id=recommendation['id']) }}' -->
                     <!-- Watchlist Button
@@ -94,10 +94,10 @@
     //const addWatchlistButton = document.getElementById('card-watchlist-button');
     const addReminderButton = document.getElementById('card-reminder-button');
     const movie = {
-        'title': document.getElementById('card-title').textContent,
-        'genre': document.getElementById('card-details').textContent,
-        'rating': document.getElementById('card-details').textContent,
-        'releaseDate': document.getElementById('card-details').textContent
+        'title': document.getElementById('title').textContent,
+        'genre': document.getElementById('genre').textContent,
+        'rating': document.getElementById('rating').textContent,
+        'releaseDate': document.getElementById('release-date').textContent
     }
     //const hidden_watch_list = document.getElementById('watchlist-hidden');
     const hidden_reminder_list = document.getElementById('reminder-hidden'); 

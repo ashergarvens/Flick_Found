@@ -278,12 +278,13 @@ def generate_recommendations(movie_choices, preferences):
                                                 "  ]\n"
                                                 "}.\n"
                                                 "Please end with a closing curly bracket."
-                     }
+                    }
                 ]
             )
             return json.loads(completion.choices[0].message.content)
         except json.JSONDecodeError:
             print("There is a json decode error")
+
 
 
 def process_response(response):
