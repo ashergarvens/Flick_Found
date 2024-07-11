@@ -117,6 +117,7 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             session['user_id'] = user.id
+            print(session['user_id'])
             flash(f'Login successful for {form.email.data}', 'success')
             return redirect(url_for('results'))
         else:
@@ -140,7 +141,7 @@ def login_required(f):
     return decorated_function
 
 # API configuration
-TMDB_API_KEY = os.environ.get('TMDB_API_KEY')
+TMDB_API_KEY = os.environ.get('TMDB_API_KEY') or '6ee03c9fb5b2144cd1ce55e22fc54381'
 OPENAI_API_KEY = os.environ.get('OPENAI_KEY')
 TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 openai.api_key = OPENAI_API_KEY
