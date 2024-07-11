@@ -65,6 +65,8 @@
     const MAX_MOVIES = 10; 
     const MAX_GENRES = 10; 
 
+
+
     addMovieButton.addEventListener('click', function(event) {
         addListItem(movieChoice, choicesList, hiddenChoicesField, MAX_MOVIES);
     });
@@ -81,7 +83,7 @@
             } else {
                 alert(`You can only add up to ${maxItems} items!`);
             }
-            inputElement.value = ''; 
+            inputElement.value = '';
         }
     }
 
