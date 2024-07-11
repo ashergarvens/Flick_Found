@@ -11,6 +11,23 @@ from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from functools import wraps
+import re
+
+# Google API imports
+import datetime
+from datetime import datetime
+from tzlocal import get_localzone
+import os.path
+import urllib3
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+
+
+SCOPES = ['https://www.googleapis.com/auth/calendar',
+          'https://www.googleapis.com/auth/calendar.events']
 
 app = Flask(__name__)
 proxied = FlaskBehindProxy(app)
@@ -28,7 +45,7 @@ class User(db.Model):
 
     genre_preferences = db.relationship('GenrePreferences', backref='user', lazy=True)
     movie_preferences = db.relationship('MoviePreferences', backref='user', lazy=True)
-    
+
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
@@ -81,7 +98,8 @@ with app.app_context():
 #     return render_template('about.html', subtitle='about', text='This is the second page!')
 def save_genre_preferences(user_id: int, genres: list[str]):
     for genre in genres:
-        db.session.add(GenrePreferences(user_id=user_id, genre=genre))
+        # Added it to do lower so that it works this way
+        db.session.add(GenrePreferences(user_id=user_id, genre=genre.lower()))
     db.session.commit()
     print(f'Genre preferences saved for User:{user_id}')
 
@@ -154,32 +172,35 @@ openai.api_key = OPENAI_API_KEY
 
 def get_matched_upcoming_movies():
     genres = {
-        28: "Action",
-        12: "Adventure",
-        16: "Animation",
-        35: "Comedy",
-        80: "Crime",
-        99: "Documentary",
-        18: "Drama",
-        10751: "Family",
-        14: "Fantasy",
-        36: "History",
-        27: "Horror",
-        10402: "Music",
-        9648: "Mystery",
-        10749: "Romance",
-        878: "Science Fiction",
-        10770: "TV Movie",
-        53: "Thriller",
-        10752: "War",
-        37: "Western"
+        28: "action",
+        12: "adventure",
+        16: "animation",
+        35: "comedy",
+        80: "crime",
+        99: "documentary",
+        18: "drama",
+        10751: "family",
+        14: "fantasy",
+        36: "history",
+        27: "horror",
+        10402: "music",
+        9648: "mystery",
+        10749: "romance",
+        878: "scifi",
+        10770: "tv movie",
+        53: "thriller",
+        10752: "war",
+        37: "western"
     }
+
+    def normalize_genre_name(name):
+        return re.sub(r'\W+', '', name.lower())
 
     def convert_id_to_genre_name(genre_id):
         return genres.get(genre_id, "Unknown")
 
     user_preferred_genres = GenrePreferences.query.filter_by(user_id=session['user_id']).all()
-    preferred_genre_names = {genre_preference.genre for genre_preference in user_preferred_genres}
+    preferred_genre_names = {normalize_genre_name(genre_preference.genre) for genre_preference in user_preferred_genres}
     upcoming_results = []
 
     url = f'https://api.themoviedb.org/3/movie/upcoming?api_key={TMDB_API_KEY}'
@@ -340,17 +361,6 @@ def generate():
 
     return redirect(url_for('results'))
 
-
-@app.route('/search', methods=['GET', 'POST'])
-@login_required
-def search():
-    if request.method == 'POST':
-        genre = request.form['genre']
-        return redirect(url_for('results', genre=genre))
-    return render_template('search.html')
-
-
-@login_required
 @app.route('/results')
 def results():
     if 'user_id' not in session:
@@ -364,6 +374,77 @@ def results():
     return render_template('results.html',
                            # recommendations is a queryObject, upcoming is a Dict
                            recommendations=recommendations, upcoming_movies=upcoming_movies)
+
+@app.route('/watchlist', methods=['GET', 'POST'])
+@login_required
+def watchlist():
+    # TO-DO: Add watchlist functionality
+    if request.method == 'POST':
+        genre = request.form['genre']
+        return redirect(url_for('results', genre=genre))
+    return render_template('search.html')
+
+@app.route('/reminder', methods=['POST'])
+@login_required
+def reminder():
+    # Set up connection to GCal and authenticate
+    creds = None
+    # The file token.json stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+    if os.path.exists("token.json"):
+        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                "credentials.json", SCOPES
+            )
+            # Specify a fixed port here
+            creds = flow.run_local_server(port=8080)
+        with open("token.json", "w") as token:
+            token.write(creds.to_json())
+    try:
+        service = build("calendar", "v3", credentials=creds)
+    except Exception:
+        # Name of the file to be deleted
+        filename = "token.json"
+        # Delete the file
+        if os.path.exists(filename):
+            os.remove(filename)
+            print(f"{filename} has been reloaded.")
+        else:
+            print(f"{filename} does not exist.")
+        
+
+    # Create Google Calendar event
+    movie_reminders_list = request.form.get('reminder-hidden').split('`')
+    movie = movie_reminders_list[-1]
+    movie_dict = json.loads(movie)
+    timeZone = get_localzone()
+
+    reminder_dict = {
+        "summary": movie_dict['title'],
+        "description": movie_dict['genre'] + movie_dict['rating'],
+        "start": {
+            "dateTime": movie_dict['releaseDate'] + "T12:00:00-13:00",
+            "timeZone": timeZone
+        },
+        "end": {
+            "dateTime": movie_dict['releaseDate'] + "T14:00:00-07:00",
+            "timeZone": timeZone
+        },
+        "reminders": {
+            "useDefault": True
+        }
+        }
+    
+    insert_event = service.events().insert(
+            calendarId='primary',
+            body=reminder_dict).execute()
+
+    return redirect(url_for('results'))
 
 
 if __name__ == '__main__':
