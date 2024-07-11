@@ -31,7 +31,7 @@ class User(db.Model):
 
     genre_preferences = db.relationship('GenrePreferences', backref='user', lazy=True)
     movie_preferences = db.relationship('MoviePreferences', backref='user', lazy=True)
-
+    
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
@@ -117,7 +117,6 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             session['user_id'] = user.id
-            print(session['user_id'])
             flash(f'Login successful for {form.email.data}', 'success')
             return redirect(url_for('results'))
         else:
@@ -350,6 +349,7 @@ def results():
     if 'user_id' not in session:
         print('ERROR')
     recommendations = RecommendedMovies.query.filter_by(user_id=session['user_id']).limit(30).all()
+
     for rec in recommendations:
         rec.poster = get_movie_poster(rec.title)
     upcoming_movies = get_matched_upcoming_movies()
