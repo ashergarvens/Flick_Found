@@ -11,6 +11,7 @@ from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from functools import wraps
+import re
 
 app = Flask(__name__)
 proxied = FlaskBehindProxy(app)
@@ -28,7 +29,7 @@ class User(db.Model):
 
     genre_preferences = db.relationship('GenrePreferences', backref='user', lazy=True)
     movie_preferences = db.relationship('MoviePreferences', backref='user', lazy=True)
-    
+
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
@@ -81,7 +82,8 @@ with app.app_context():
 #     return render_template('about.html', subtitle='about', text='This is the second page!')
 def save_genre_preferences(user_id: int, genres: list[str]):
     for genre in genres:
-        db.session.add(GenrePreferences(user_id=user_id, genre=genre))
+        # Added it to do lower so that it works this way
+        db.session.add(GenrePreferences(user_id=user_id, genre=genre.lower()))
     db.session.commit()
     print(f'Genre preferences saved for User:{user_id}')
 
@@ -154,32 +156,35 @@ openai.api_key = OPENAI_API_KEY
 
 def get_matched_upcoming_movies():
     genres = {
-        28: "Action",
-        12: "Adventure",
-        16: "Animation",
-        35: "Comedy",
-        80: "Crime",
-        99: "Documentary",
-        18: "Drama",
-        10751: "Family",
-        14: "Fantasy",
-        36: "History",
-        27: "Horror",
-        10402: "Music",
-        9648: "Mystery",
-        10749: "Romance",
-        878: "Science Fiction",
-        10770: "TV Movie",
-        53: "Thriller",
-        10752: "War",
-        37: "Western"
+        28: "action",
+        12: "adventure",
+        16: "animation",
+        35: "comedy",
+        80: "crime",
+        99: "documentary",
+        18: "drama",
+        10751: "family",
+        14: "fantasy",
+        36: "history",
+        27: "horror",
+        10402: "music",
+        9648: "mystery",
+        10749: "romance",
+        878: "scifi",
+        10770: "tv movie",
+        53: "thriller",
+        10752: "war",
+        37: "western"
     }
+
+    def normalize_genre_name(name):
+        return re.sub(r'\W+', '', name.lower())
 
     def convert_id_to_genre_name(genre_id):
         return genres.get(genre_id, "Unknown")
 
     user_preferred_genres = GenrePreferences.query.filter_by(user_id=session['user_id']).all()
-    preferred_genre_names = {genre_preference.genre for genre_preference in user_preferred_genres}
+    preferred_genre_names = {normalize_genre_name(genre_preference.genre) for genre_preference in user_preferred_genres}
     upcoming_results = []
 
     url = f'https://api.themoviedb.org/3/movie/upcoming?api_key={TMDB_API_KEY}'
