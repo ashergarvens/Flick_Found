@@ -21,8 +21,8 @@ import urllib3
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+# from googleapiclient.discovery import build
+# from googleapiclient.errors import HttpError
 
 
 SCOPES = ['https://www.googleapis.com/auth/calendar',
@@ -369,77 +369,6 @@ def results():
     return render_template('results.html',
                            # recommendations is a queryObject, upcoming is a Dict
                            recommendations=recommendations, upcoming_movies=upcoming_movies)
-
-@app.route('/watchlist', methods=['GET', 'POST'])
-@login_required
-def watchlist():
-    # TO-DO: Add watchlist functionality
-    if request.method == 'POST':
-        genre = request.form['genre']
-        return redirect(url_for('results', genre=genre))
-    return render_template('search.html')
-
-@app.route('/reminder', methods=['POST'])
-@login_required
-def reminder():
-    # Set up connection to GCal and authenticate
-    creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                "credentials.json", SCOPES
-            )
-            # Specify a fixed port here
-            creds = flow.run_local_server(port=8080)
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
-    try:
-        service = build("calendar", "v3", credentials=creds)
-    except Exception:
-        # Name of the file to be deleted
-        filename = "token.json"
-        # Delete the file
-        if os.path.exists(filename):
-            os.remove(filename)
-            print(f"{filename} has been reloaded.")
-        else:
-            print(f"{filename} does not exist.")
-        
-
-    # Create Google Calendar event
-    movie_reminders_list = request.form.get('reminder-hidden').split('`')
-    movie = movie_reminders_list[-1]
-    movie_dict = json.loads(movie)
-    timeZone = get_localzone()
-
-    reminder_dict = {
-        "summary": movie_dict['title'],
-        "description": movie_dict['genre'] + movie_dict['rating'],
-        "start": {
-            "dateTime": movie_dict['releaseDate'] + "T12:00:00-13:00",
-            "timeZone": timeZone
-        },
-        "end": {
-            "dateTime": movie_dict['releaseDate'] + "T14:00:00-07:00",
-            "timeZone": timeZone
-        },
-        "reminders": {
-            "useDefault": True
-        }
-        }
-    
-    insert_event = service.events().insert(
-            calendarId='primary',
-            body=reminder_dict).execute()
-
-    return redirect(url_for('results'))
 
 
 if __name__ == '__main__':
