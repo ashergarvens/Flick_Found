@@ -1,0 +1,123 @@
+html, body{
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    background-image: linear-gradient(to bottom, #0E0101, #660404);
+    background-repeat: no-repeat;
+    background-size: cover;
+    
+}
+.nav-brand {
+    font-size: 60px;
+}
+h1 {
+    font-family: 'Jockey One', sans-serif;
+    font-size: 70px;
+    background: -webkit-linear-gradient(#DE4B0C, #FFB11A);
+    background-clip: text;
+    -webkit-text-fill-color: transparent; 
+    padding-right: 20px; 
+    margin-right: 20px; 
+}
+h2 {
+    font-family: 'Jockey One', sans-serif;
+    font-size: 35px;
+    background: -webkit-linear-gradient(#DE4B0C, #FFB11A);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.nav-link {
+    background: white;
+    background-clip: text;
+    -webkit-text-fill-color: transparent; 
+    &:hover {
+        text-decoration: underline;
+    }
+}
+.movies-container {
+    margin-top: 20px;
+    margin-left: 40px;
+    
+
+}
+.recommendations {
+    display: flex;
+    overflow-x: auto;
+    justify-content: flex-start;
+    gap: 16px; 
+    padding: 16px;
+    scrollbar-color: rgba(0, 0, 0, 0.5) transparent;
+    
+}
+
+.recommendations::-webkit-scrollbar {
+    height: 12px;
+}
+
+.recommendations::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.recommendations::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0);
+    border-radius: 6px;
+}
+
+.recommendations::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.card {
+    margin: 8px; 
+    box-shadow: rgba(0, 0, 0, 0.07) 0px 1px 2px, rgba(0, 0, 0, 0.07) 0px 2px 4px, rgba(0, 0, 0, 0.07) 0px 2px 4px, rgba(0, 0, 0, 0.07) 0px 4px 8px, rgba(0, 0, 0, 0.07) 0px 8px 16px, rgba(0, 0, 0, 0.07) 0px 16px 32px;
+    display: flex;
+    text-align: center;
+    vertical-align: top;
+    flex-direction: column;
+    flex-shrink: 0; 
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.3s;
+    padding: 0;
+    background-color: rgba(34, 33, 33, 0.0);
+
+}
+
+.card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(2, 2.5, 2.5, 2.5);
+}
+.card img {
+    border-radius: 5px 5px 0 0; 
+    object-fit: cover;
+    width: 100%;
+    height: auto;
+    margin: 0;
+    width: 300px;
+    
+}
+.card-title {
+    font-family: 'Jockey One', sans-serif;
+    font-size: 20px;
+    margin: 14px;
+    word-wrap: break-word; 
+    overflow-wrap: break-word;
+    font-weight: bold;
+    background: -webkit-linear-gradient(#DE4B0C, #FFB11A);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.card-details {
+    font-size: 14px;
+    margin: 0 10px 10px 10px;
+    background: rgb(248, 248, 248);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+   
+}
+
+
