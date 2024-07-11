@@ -29,21 +29,30 @@
     </style>
 </head>
 <body>
-    <h1>Recommendations</h1>
-    <div class="recommendations">
-        {% for recommendation in recommendations %}
-            <div class="card">
-                {% if recommendation['poster'] %}
-                    <img src="{{ recommendation['poster'] }}" alt="Movie Poster">
-                {% else %}
-                    <img src="/static/default_poster.jpg" alt="Default Poster">
-                {% endif %}
-                <div class="card-title">{{ recommendation['title'] }}</div>
-                <div class="card-details">Genre: {{ recommendation['genre'] }}</div>
-                <div class="card-details">Rating: {{ recommendation['rating'] }}</div>
-                <div class="card-details">Release Date: {{ recommendation['releaseDate'] }}</div>
-            </div>
-        {% endfor %}
+    <div>
+        <h1>Recommendations</h1>
+        <div class="recommendations">
+            {% for recommendation in recommendations %}
+                <div class="card">
+                    {% if recommendation['poster'] %}
+                        <img src="{{ recommendation.poster }}" alt="Movie Poster">
+                    {% else %}
+                        <img src="/static/default_poster.jpg" alt="Default Poster">
+                    {% endif %}
+                    <div class="card-title">{{ recommendation.title }}</div>
+                    <div class="card-details">Genre: {{ recommendation.genre }}</div>
+                    <div class="card-details">Rating: {{ recommendation.rating }}</div>
+                    <div class="card-details">Release Date: {{ recommendation.release_date }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div>
+        <h1>Upcoming Movies</h1>
+        <h6>Flickerfy recommends upcoming movies based on your preferences</h6>
+        <div class="upcoming-movies">
+
+        </div>
     </div>
     <a href="{{ url_for('search') }}">Back to Search</a>
 </body>

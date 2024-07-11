@@ -5,7 +5,7 @@ import requests
 import openai
 from openai import OpenAI
 import json
-from flask import Flask, render_template, url_for, flash, redirect, request
+from flask import Flask, render_template, url_for, flash, redirect, request, session
 from forms import RegistrationForm, LoginForm
 from flask_behind_proxy import FlaskBehindProxy
 from flask_sqlalchemy import SQLAlchemy
@@ -14,7 +14,6 @@ from flask_migrate import Migrate
 app = Flask(__name__)
 proxied = FlaskBehindProxy(app)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
-
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -25,8 +24,38 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
 
+    genre_preferences = db.relationship('GenrePreferences', backref='user', lazy=True)
+    movie_preferences = db.relationship('MoviePreferences', backref='user', lazy=True)
+
     def __repr__(self):
         return f"User('{self.email}')"
+
+
+class RecommendedMovies(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    release_date = db.Column(db.String(15), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    genre = db.Column(db.String(120), nullable=False)
+
+
+class GenrePreferences(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    genre = db.Column(db.String(20), nullable=False)  # Assuming storing genre as a string
+
+    def __repr__(self):
+        return f"Genre_Preferences(user_id={self.user_id}, genre={self.genre})"
+
+
+class MoviePreferences(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    movie = db.Column(db.String(100), nullable=False)  # Can be adjusted we have long*** movie titles
+
+    def __repr__(self):
+        return f"Movie_Preferences(user_id={self.user_id}, genre={self.movie})"
 
 
 with app.app_context():
@@ -42,6 +71,18 @@ with app.app_context():
 # @app.route("/about")
 # def second_page():
 #     return render_template('about.html', subtitle='about', text='This is the second page!')
+def save_genre_preferences(user_id: int, genres: list[str]):
+    for genre in genres:
+        db.session.add(GenrePreferences(user_id=user_id, genre=genre))
+    db.session.commit()
+    print(f'Genre preferences saved for User:{user_id}')
+
+
+def save_movie_preferences(user_id, movie_choices):
+    for movie in movie_choices:
+        db.session.add(MoviePreferences(user_id=user_id, movie=movie))
+    db.session.commit()
+    print(f'Movie preferences saved for User:{user_id}')
 
 
 @app.route("/register", methods=['GET', 'POST'])
@@ -62,7 +103,8 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        if user and user.password == (form.password.data):
+        if user and user.password == form.password.data:
+            session['user_id'] = user.id
             flash(f'Login successful for {form.email.data}', 'success')
             return redirect(url_for('results'))
         else:
@@ -77,12 +119,56 @@ TMDB_BASE_URL = 'https://api.themoviedb.org/3'
 openai.api_key = OPENAI_API_KEY
 
 
-def get_upcoming_movies(tmbd_api_key):
+def get_matched_upcoming_movies():
+    genres = {
+        28: "Action",
+        12: "Adventure",
+        16: "Animation",
+        35: "Comedy",
+        80: "Crime",
+        99: "Documentary",
+        18: "Drama",
+        10751: "Family",
+        14: "Fantasy",
+        36: "History",
+        27: "Horror",
+        10402: "Music",
+        9648: "Mystery",
+        10749: "Romance",
+        878: "Science Fiction",
+        10770: "TV Movie",
+        53: "Thriller",
+        10752: "War",
+        37: "Western"
+    }
+
+    def convert_id_to_genre_name(genre_id):
+        return genres[int(genre_id)]
+
+    user_preferred_genres = GenrePreferences.query.filter_by(user_id=session['user_id']).all()
+    # Access genre by doing loop with genre_preference.genre
+    results = []
+
     # calls to get upcoming movies -> we can process them to get chatgpt recommendations 
     url = f'https://api.themoviedb.org/3/movie/upcoming?api_key={TMDB_API_KEY}'
     response = requests.get(url)
     if response.status_code == 200:
-        return response.json()['results']
+        upcoming_movies_json = response.json()['results']
+        for movie in upcoming_movies_json:
+            for genre_id in movie['genre_ids']:
+                genre_name = convert_id_to_genre_name(genre_id)
+                if genre_name in user_preferred_genres:
+                    full_genre_list = [convert_id_to_genre_name(genre_id) for genre_id in movie['genre_ids']]
+                    movie_entry = {
+                        'title': movie['title'],
+                        'release_date': movie['release_date'],
+                        'rating': movie['vote_average'],
+                        'poster_path': movie['poster_path'],
+                        'genre': ', '.join(full_genre_list)
+                    }
+                    results.append(movie_entry)
+                    break
+        return results
     else:
         return []
 
@@ -175,10 +261,30 @@ def process_choices_and_recommendations(movie_choices, recommendations):
 
 
 def modify_database(recommendations):
-    df = pd.DataFrame.from_dict(recommendations)
-    engine = create_engine('sqlite:///media_recommendations.db')
-    if not df.empty:
-        df.to_sql('recommendations', con=engine, if_exists='replace', index=False)
+    user_id = session.get('user_id')
+    if not user_id:
+        print("User ID not found in session.")
+        return
+
+    try:
+        for recommendation in recommendations:
+            title = recommendation.get('title')
+            genre = recommendation.get('genre')
+            rating = recommendation.get('rating')
+            release_date = recommendation.get('release_date')
+
+            if title and genre and rating and release_date:
+                recommend_movie = RecommendedMovies(
+                    title=title, genre=genre, rating=rating, release_date=release_date, user_id=user_id)
+                db.session.add(recommend_movie)
+            else:
+                print(f"Skipping invalid recommendation: {recommendation}")
+
+        db.session.commit()
+        print('Movies successfully added')
+    except Exception as e:
+        db.session.rollback()
+        print(f"An error occurred: {e}")
 
 
 @app.route('/preferences')
@@ -186,12 +292,13 @@ def preferences():
     return render_template('preferences.html')
 
 
-
 @app.route('/generate', methods=['POST'])
 def generate():
-    choices = request.form.get('choices-hidden').split('`')
+    movie_choices = request.form.get('choices-hidden').split('`')
     genres = request.form.get('genre-hidden').split('`')
-    recommendations = process_choices_and_recommendations(choices, genres)
+    save_genre_preferences(session['user_id'], genres)
+    save_movie_preferences(session['user_id'], movie_choices)
+    recommendations = process_choices_and_recommendations(movie_choices, genres)
     if recommendations:
         modify_database(recommendations)
     else:
@@ -209,22 +316,14 @@ def search():
 
 
 @app.route('/results')
-@app.route('/results/<genre>')
-def results(genre=None):
-    engine = create_engine('sqlite:///media_recommendations.db')
-    query = "SELECT * FROM recommendations"
-    if genre:
-        query += f" WHERE genre LIKE '%{genre}%'"
-
-    with engine.connect() as connection:
-        result = connection.execute(text(query)).fetchall()
-        df = pd.DataFrame(result, columns=['title', 'genre', 'rating', 'releaseDate'])
-
-    recommendations = df.to_dict(orient='records')
+def results():
+    recommendations = RecommendedMovies.query.filter(user_id=session.get('user_id')).limit(10).all()
     for rec in recommendations:
-        rec['poster'] = get_movie_poster(rec['title'])
+        rec.poster = get_movie_poster(rec.title)
+    upcoming_movies = get_matched_upcoming_movies()
 
-    return render_template('results.html', recommendations=recommendations)
+    return render_template('results.html',
+                           recommendations=recommendations, upcoming_movies=upcoming_movies)
 
 
 if __name__ == '__main__':
