@@ -6,3 +6,5 @@ venv/
 instance/
 .env
 media_recommendations.db
+credentials.json
+token.json
