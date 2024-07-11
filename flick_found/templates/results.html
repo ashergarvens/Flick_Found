@@ -25,9 +25,9 @@
                     <a class="nav-link" href="{{ url_for('search') }}">Watchlist</a>
                 </li>
             </ul>
-            <form class="form-inline my-2 my-lg-0">
+            <form class="form-inline">
                 {% if session.get('user_id') %}
-                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                    <a href="{{ url_for('logout') }}" class="btn">Logout</a>
                 {% endif %}
             </form>
         </div>
