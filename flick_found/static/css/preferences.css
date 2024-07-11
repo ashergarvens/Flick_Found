@@ -37,6 +37,12 @@ p {
     width: 100%;
     z-index: 1000;
 }
+.alert {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
 .form-inline {
     background-color: #FFB11A;
     border-radius: 5px;
