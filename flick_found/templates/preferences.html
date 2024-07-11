@@ -37,6 +37,9 @@
             <div class = "submit-button-container">
                 <button type="submit" id = "submit">Generate Recommendations</button>
             </div>
+            {% if session.get('user_id') %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                {% endif %}
         </form>
     </div>
 </body>
