@@ -26,7 +26,9 @@
                 </li>
             </ul>
             <form class="form-inline my-2 my-lg-0">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Sign Out</button>
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                {% endif %}
             </form>
         </div>
     </nav>
