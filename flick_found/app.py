@@ -16,6 +16,7 @@ import re
 # Google API imports
 import datetime
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from tzlocal import get_localzone
 import os.path
 import urllib3
@@ -425,27 +426,62 @@ def reminder():
         else:
             print(f"{filename} does not exist.")
     
+    reminder_hidden_key = None
+    for key in request.form.keys():
+        if key.startswith('reminder-hidden'):
+            reminder_hidden_key = key
+            break
+
+    if reminder_hidden_key is None:
+        print("No 'reminder-hidden' key found in form data")
+        return "Form data missing", 400
+    
     # Create Google Calendar event
-    movie_reminders_list = request.form.get('reminder-hidden').split('`')
+    reminder_hidden_value = request.form.get(reminder_hidden_key)
+    if not reminder_hidden_value:
+        return "No value in 'reminder-hidden'", 400
+
+    movie_reminders_list = reminder_hidden_value.split('`')
+
+    # Remove empty strings from the list
+    movie_reminders_list = [movie for movie in movie_reminders_list if movie]
+    if not movie_reminders_list:
+        print("No valid movie reminders found")
+        return "No valid movie reminders", 400
+
     movie = movie_reminders_list[-1]
+
     movie_dict = json.loads(movie)
     timeZone = get_localzone()
+
+    release_date_str = movie_dict['releaseDate'].split(': ')[1]
+    start_datetime_str = release_date_str + "T12:00:00"
+    end_datetime_str = release_date_str + "T14:00:00"
+
+    try:
+        start_datetime = datetime.fromisoformat(start_datetime_str)
+        end_datetime = datetime.fromisoformat(end_datetime_str)
+    except ValueError as e:
+        print("Datetime format error:", e)
+        return "Invalid datetime format", 400
 
     reminder_dict = {
         "summary": movie_dict['title'],
         "description": movie_dict['genre'] + movie_dict['rating'],
         "start": {
-            "dateTime": movie_dict['releaseDate'] + "T12:00:00-13:00",
-            "timeZone": timeZone
+            "dateTime": start_datetime.isoformat(),
+            "timeZone": str(timeZone)
         },
         "end": {
-            "dateTime": movie_dict['releaseDate'] + "T14:00:00-07:00",
-            "timeZone": timeZone
+            "dateTime": end_datetime.isoformat(),
+            "timeZone": str(timeZone)
         },
         "reminders": {
             "useDefault": True
         }
         }
+    print("Reminder dict:", json.dumps(reminder_dict, indent=4))
+
     
     insert_event = service.events().insert(
             calendarId='primary',
