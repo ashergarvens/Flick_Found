@@ -52,6 +52,16 @@ p {
        cursor: pointer;
    }
 }
+.nav-link {
+    background: white;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-left: 20px; 
+    &:hover {
+        text-decoration: underline;
+        text-decoration-color: #FFB11A;
+    }
+}
 .pref-container {
     background-color: #1B2230;
     text-align: center;
