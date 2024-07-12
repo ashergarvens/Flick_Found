@@ -72,21 +72,21 @@
         <h2>Upcoming Movies/Movies Airing</h2>
         <div class="upcoming-movies">
             {% for movie in upcoming_movies %}
-                <div class="up-card">
+                <div class="up-card" id="movie-card-{{ loop.index }}">
                     {% if movie['poster_path'] %}
                         <img src="{{ movie['poster_path'] }}" alt="Movie Poster">
                     {% else %}
                         <img src="/static/default_poster.jpg" alt="Default Poster">
                     {% endif %}
-                    <div class="title" id = "title">{{ movie['title'] }}</div>
-                    <div class="details" id = "genre">Genre: {{ movie['genre'] }}</div>
-                    <div class="details" id = "rating">Rating: {{ movie['rating'] }}</div>
-                    <div class="details" id = "release">Release Date: {{ movie['release_date'] }}</div>
+                    <div class="title" id = "title-{{ loop.index }}">{{ movie['title'] }}</div>
+                    <div class="details" id = "genre-{{ loop.index }}">Genre: {{ movie['genre'] }}</div>
+                    <div class="details" id = "rating-{{ loop.index }}">Rating: {{ movie['rating'] }}</div>
+                    <div class="details" id = "release-{{ loop.index }}">Release Date: {{ movie['release_date'] }}</div>
 
-                    <form action="{{ url_for('reminder') }}" id="reminder-form" method="POST">
+                    <form action="{{ url_for('reminder') }}" id="reminder-form-{{ loop.index }}" method="POST">
                         <div class= "reminder-button-wrapper">
-                            <input type="text" name="reminder-hidden" id="reminder-hidden" hidden>
-                            <button type ="button" id = "reminder-button" title="Add to Calendar">&#9744;</button>
+                            <input type="text" name="reminder-hidden-{{ loop.index }}" id="reminder-hidden-{{ loop.index }}" hidden>
+                            <button type ="button" id = "reminder-button-{{ loop.index }}" class = "reminder-button" data-index="{{ loop.index }}" title="Add to Calendar">&#9744;</button>
                         </div>
                     </form>
                 </div>
@@ -100,59 +100,58 @@
 </body>
 <script>
 
-    // Function to remove flash messages after a few seconds
-    function removeFlashMessages() {
-        const flashMessages = document.querySelectorAll('.alert');
-        flashMessages.forEach((message) => {
-            setTimeout(() => {
-                message.style.display = 'none';
-            }, 3000); // 3000 milliseconds = 3 seconds
-        });
-    }
-    
-    // Run the function to remove flash messages
-    document.addEventListener('DOMContentLoaded', removeFlashMessages);
-
     document.addEventListener('DOMContentLoaded', function() {
-    //const addWatchlistButton = document.getElementById('card-watchlist-button');
-    const addReminderButton = document.getElementById('reminder-button');
-    const movie = {
-        'title': document.getElementById('title').textContent,
-        'genre': document.getElementById('genre').textContent,
-        'rating': document.getElementById('rating').textContent,
-        'releaseDate': document.getElementById('release').textContent
-    }
-    //const hidden_watch_list = document.getElementById('watchlist-hidden');
-    const hidden_reminder_list = document.getElementById('reminder-hidden'); 
-    
-    //addWatchlistButton.addEventListener('click', function(event) {
-    //    addListItem(JSON.stringify(movie), hidden_watch_list);
-    //});
+                
+        const addReminderButtons = document.querySelectorAll('.reminder-button');
 
-    addReminderButton.addEventListener('click', function(event) {
-        // Add reminder to calendar
-        if (!(hidden_reminder_list.value.includes(JSON.stringify(movie)))) {
-            if (confirm('Add reminder to calendar?')) {
-                addListItem(JSON.stringify(movie), hidden_reminder_list);
-                document.getElementById('card-reminder-button').innerHTML = '&#9745;';
-                form = document.getElementById('reminder-form');
-                form.submit();
+        addReminderButtons.forEach(button => {
+            button.addEventListener('click', function(event) {
+                // Get the index of the current button
+                const index = button.getAttribute('data-index');
+
+                // Create movie object from the card
+                const movie = {
+                    'title': document.getElementById(`title-${index}`).textContent,
+                    'genre': document.getElementById(`genre-${index}`).textContent,
+                    'rating': document.getElementById(`rating-${index}`).textContent,
+                    'releaseDate': document.getElementById(`release-${index}`).textContent
+                };
+
+                const hiddenReminderList = document.getElementById(`reminder-hidden-${index}`);
+
+                if (!(hiddenReminderList.value.includes(JSON.stringify(movie)))) {
+                    if (confirm('Add reminder to calendar?')) {
+                        addListItem(JSON.stringify(movie), hiddenReminderList);
+                        button.innerHTML = '&#9745;';
+                        console.log(hiddenReminderList.value);
+                        const form = document.getElementById(`reminder-form-${index}`);
+                        form.submit();
+                    }
+                } else {
+                    alert('Reminder already added');
+                }
+            });
+        });
+
+        function addListItem(inputElement, hiddenField) {
+            const newItemText = inputElement.trim();
+            if (newItemText !== '') {
+                hiddenField.value += newItemText + '`';
             }
-        }else{
-            alert('Reminder already added');
         }
-    });
 
-
-    function addListItem(inputElement, hiddenField) {
-        const newItemText = inputElement.trim();
-        if (newItemText !== '') {
-            hiddenField.value += newItemText + '`';
-            inputElement.value = ''; 
+        // Function to remove flash messages after a few seconds
+        function removeFlashMessages() {
+            const flashMessages = document.querySelectorAll('.alert');
+            flashMessages.forEach((message) => {
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 3000); // 3000 milliseconds = 3 seconds
+            });
         }
-    }
 
+        // Run the function to remove flash messages
+        removeFlashMessages();
     });
-
 </script>
 </html>
