@@ -86,7 +86,9 @@
                     <form action="{{ url_for('reminder') }}" id="reminder-form-{{ loop.index }}" method="POST">
                         <div class= "reminder-button-wrapper">
                             <input type="hidden" name="reminder-hidden-{{ loop.index }}" id="reminder-hidden-{{ loop.index }}" hidden>
-                            <button type ="button" id = "reminder-button-{{ loop.index }}" class = "reminder-button" data-index="{{ loop.index }}" title="Add to Calendar">&#9744;</button>
+                            <button type ="button" id = "reminder-button-{{ loop.index }}" class = "reminder-button" data-index="{{ loop.index }}" title="Add to Calendar">
+                                <img src="{{ url_for('static', filename='img/Calendar.png') }}" alt="Add to Calendar"/>
+                            </button>
                         </div>
                     </form>
                 </div>
