@@ -480,8 +480,8 @@ def reminder():
             "useDefault": True
         }
         }
-    print("Reminder dict:", json.dumps(reminder_dict, indent=4))
-
+    movie_dict_title = movie_dict['title']
+    flash(f'Reminder added for {movie_dict_title}!', 'success')
     
     insert_event = service.events().insert(
             calendarId='primary',
