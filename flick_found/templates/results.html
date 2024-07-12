@@ -85,7 +85,7 @@
 
                     <form action="{{ url_for('reminder') }}" id="reminder-form-{{ loop.index }}" method="POST">
                         <div class= "reminder-button-wrapper">
-                            <input type="text" name="reminder-hidden-{{ loop.index }}" id="reminder-hidden-{{ loop.index }}" hidden>
+                            <input type="hidden" name="reminder-hidden-{{ loop.index }}" id="reminder-hidden-{{ loop.index }}" hidden>
                             <button type ="button" id = "reminder-button-{{ loop.index }}" class = "reminder-button" data-index="{{ loop.index }}" title="Add to Calendar">&#9744;</button>
                         </div>
                     </form>
@@ -106,6 +106,7 @@
 
         addReminderButtons.forEach(button => {
             button.addEventListener('click', function(event) {
+                event.preventDefault();
                 // Get the index of the current button
                 const index = button.getAttribute('data-index');
 
