@@ -12,6 +12,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from functools import wraps
 import re
+from sqlalchemy import desc
+
 
 # Google API imports
 import datetime
@@ -373,7 +375,11 @@ def generate():
 def results():
     if 'user_id' not in session:
         print('ERROR')
-    recommendations = RecommendedMovies.query.filter_by(user_id=session['user_id']).limit(30).all()
+    recommendations = RecommendedMovies.query \
+    .filter_by(user_id=session['user_id']) \
+    .order_by(desc(RecommendedMovies.id)) \
+    .limit(30) \
+    .all()
 
     for rec in recommendations:
         rec.poster = get_movie_poster(rec.title)
