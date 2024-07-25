@@ -3,18 +3,16 @@
 [![Tests](https://github.com/ashergarvens/recommendation_bot/actions/workflows/tests.yaml/badge.svg)](https://github.com/ashergarvens/recommendation_bot/actions/workflows/tests.yaml)
 
 ## Overview
-- Movie Recommendation Bot
-- We are trying to solve the problem of finding a new show or movie to watch that is personalized based 
-   the users preferences or preferred genre. The user would be asked questions and give a couple examples 
-   of previous shows or movies that they have watched.
-- The project interfaces with the ChatGPT API, a user, the terminal, Python, and SQL.
--  The inputs are the questions that the bot asks you and the user inputs.
-- The outputs are the recommendations that the bot outputs like TV shows or movies that are then 
-   saved into the database.
-- Bot asks questions based off preferences such as genre or media that the user already likes. 
-   Then, format into a prompt sent to the ChatGPT API. Get a response and process the response and get 
-   it back to the user. The user can decide if they want more information. Finally, the data gets 
-   transfered into a database where users can see the results or recall them later.
+We are trying to solve the problem of finding a new show or movie to watch that is personalized based 
+the users preferences or preferred genre. The user would be asked questions and give a couple examples 
+of previous shows or movies that they have watched.
+
+The project interfaces with the ChatGPT API, Python, and SQL.
+
+Bot asks questions based off preferences such as genre or media that the user already likes. 
+Then, format into a prompt sent to the ChatGPT API. Get a response and process the response and get 
+it back to the user. The user can decide if they want more information. Finally, the data gets 
+transfered into a database where users can see the results or recall them later.
 
 
 ## Usefulness and Technology
@@ -24,9 +22,7 @@
 
 ## Project Setup & Libraries
 ```
-pip install pandas
-pip install sqlalchemy
-pip install openai
+pip install -r requirements.txt
 ```
 ## API key
 - set your API key as an environmental variable
